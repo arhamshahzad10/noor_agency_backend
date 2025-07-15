@@ -27,10 +27,10 @@
                 <th>Total</th>
             </tr>
         </thead>
-        <tbody>
-            {% for i, item in enumerate(data.items) %}
+       <tbody>
+            {% for item in data.items %}
             <tr>
-                <td>{{ i+1 }}</td>
+                <td>{{ loop.index }}</td>
                 <td>{{ item.productDescription }}</td>
                 <td>{{ item.hsCode }}</td>
                 <td>{{ item.quantity }}</td>
