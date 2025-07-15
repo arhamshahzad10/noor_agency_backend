@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, render_template, request, jsonify, send_file, send_from_directory
 from flask import render_template
 from collections import OrderedDict
 import pandas as pd
@@ -429,19 +429,16 @@ def generate_invoice_excel():
     wb.save(output_excel)
     wb.close()
 
-     # Create HTML string from template
-    rendered = render_template("invoice_template.html", data=data)
+     # Render the HTML template with data
+    rendered_html = render_template('invoice_template.html', data=data)
     
-    # Generate PDF
-    pdf = HTML(string=rendered).write_pdf()
+    # Use WeasyPrint to generate PDF from the rendered HTML
+    pdf_file_path = 'invoice.pdf'
+    HTML(string=rendered_html).write_pdf(pdf_file_path)
 
-    
-    # Return PDF as downloadable file
-    response = make_response(pdf)
-    response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = 'attachment; filename=invoice.pdf'
-    return response
-    
+
+    return send_file(pdf_file_path, as_attachment=True)
+
     
     
     
