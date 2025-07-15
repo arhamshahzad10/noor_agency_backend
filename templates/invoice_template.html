@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 12px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #333; padding: 5px; text-align: left; }
+    </style>
+</head>
+<body>
+    <h2>Invoice</h2>
+    <p><strong>Seller:</strong> {{ data.sellerBusinessName }}</p>
+    <p><strong>Buyer:</strong> {{ data.buyerBusinessName }}</p>
+    <p><strong>Date:</strong> {{ data.invoiceDate }}</p>
+    <p><strong>Invoice Ref No:</strong> {{ data.invoiceRefNo }}</p>
+
+    <h3>Items</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Description</th>
+                <th>HS Code</th>
+                <th>Qty</th>
+                <th>Value Excl ST</th>
+                <th>ST</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for i, item in enumerate(data.items) %}
+            <tr>
+                <td>{{ i+1 }}</td>
+                <td>{{ item.productDescription }}</td>
+                <td>{{ item.hsCode }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.valueSalesExcludingST }}</td>
+                <td>{{ item.salesTaxApplicable }}</td>
+                <td>{{ item.valueSalesExcludingST + item.salesTaxApplicable }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

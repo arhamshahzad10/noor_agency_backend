@@ -14,6 +14,7 @@ from openpyxl.drawing.image import Image as ExcelImage
 import tempfile
 from openpyxl.styles import Font
 from openpyxl.drawing.image import Image as OpenPyxlImage
+import pdfkit
 #import win32com.client as win32
 #import pythoncom
 import math
@@ -427,8 +428,12 @@ def generate_invoice_excel():
     wb.save(output_excel)
     wb.close()
 
-    # Return the Excel file directly
-    return send_from_directory(directory='.', path=output_excel, as_attachment=True)
+     # Create HTML string from template
+    rendered = render_template("invoice_template.html", data=data)
+    output_pdf = f'generated_invoice_{env}.pdf'
+    pdfkit.from_string(rendered, output_pdf)
+
+    return send_from_directory(directory='.', path=output_pdf, as_attachment=True)
     
     
     
