@@ -403,10 +403,10 @@ def generate_invoice_excel():
         qr.save(qr_path)
 
     # Insert into Excel at E11
-    img = ExcelImage(qr_path)
-    img.width = 100  # adjust size as needed
-    img.height = 100
-    ws.add_image(img, 'G10')
+    qrimg = ExcelImage(qr_path)
+    qrimg.width = 100  # adjust size as needed
+    qrimg.height = 100
+    ws.add_image(qrimg, 'G10')
     
     
     
@@ -429,9 +429,9 @@ def generate_invoice_excel():
     wb.save(output_excel)
     wb.close()
 
-     # Render the HTML template with data
-    rendered_html = render_template('invoice_template.html', data=data)
-    
+    # Render the HTML template with data
+    rendered_html = render_template('invoice_template.html', data=data, qr_path=qr_path, logo_path="fbr_logo.png")
+
     # Use WeasyPrint to generate PDF from the rendered HTML
     pdf_file_path = 'invoice.pdf'
     HTML(string=rendered_html).write_pdf(pdf_file_path)

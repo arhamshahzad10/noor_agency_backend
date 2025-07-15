@@ -2,38 +2,108 @@
 <html>
 <head>
     <style>
-        body { font-family: Arial, sans-serif; font-size: 12px; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #333; padding: 5px; text-align: left; }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            margin: 20px;
+        }
+
+        .header-table,
+        .info-table,
+        .item-table,
+        .footer-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .item-table th,
+        .item-table td {
+            border: 1px solid #333;
+            padding: 5px;
+            text-align: center;
+        }
+
+        .section-title {
+            font-weight: bold;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+
+        .right {
+            text-align: right;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .footer-cell {
+            border: 1px solid #333;
+            padding: 10px;
+            text-align: right;
+        }
     </style>
 </head>
 <body>
-    <h2>Invoice</h2>
-    <p><strong>Seller:</strong> {{ data.sellerBusinessName }}</p>
-    <p><strong>Buyer:</strong> {{ data.buyerBusinessName }}</p>
-    <p><strong>Date:</strong> {{ data.invoiceDate }}</p>
-    <p><strong>Invoice Ref No:</strong> {{ data.invoiceRefNo }}</p>
 
-    <h3>Items</h3>
-    <table>
+    <h2 class="center">SALES TAX INVOICE</h2>
+
+    <table class="info-table">
+        <tr>
+            <td>
+                <p><span class="bold">Seller Name:</span> {{ data.sellerBusinessName }}</p>
+                <p><span class="bold">Seller Address:</span> {{ data.sellerAddress }}</p>
+                <p><span class="bold">City:</span> {{ data.city or "Lahore" }}</p>
+                <p><span class="bold">Province:</span> {{ data.sellerProvince }}</p>
+                <p><span class="bold">NTN/CNIC:</span> {{ data.sellerNTNCNIC }}</p>
+            </td>
+            <td class="right">
+                <p><span class="bold">Invoice No:</span> {{ data.invoiceRefNo }}</p>
+                <p><span class="bold">Invoice Date:</span> {{ data.invoiceDate }}</p>
+                <p><span class="bold">FBR Invoice No:</span> {{ data.fbrInvoiceNumber or "" }}</p>
+            </td>
+        </tr>
+    </table>
+
+    <div class="section-title">Buyer Details</div>
+    <table class="info-table">
+        <tr>
+            <td>
+                <p><span class="bold">Buyer Name:</span> {{ data.buyerBusinessName }}</p>
+                <p><span class="bold">Buyer Address:</span> {{ data.buyerAddress }}</p>
+                <p><span class="bold">Province:</span> {{ data.buyerProvince }}</p>
+                <p><span class="bold">NTN/CNIC:</span> {{ data.buyerNTNCNIC }}</p>
+            </td>
+        </tr>
+    </table>
+
+    <div class="section-title">Items</div>
+    <table class="item-table">
         <thead>
             <tr>
-                <th>#</th>
+                <th>Sr. No.</th>
+                <th>Quantity</th>
                 <th>Description</th>
                 <th>HS Code</th>
-                <th>Qty</th>
+                <th>Price</th>
                 <th>Value Excl ST</th>
-                <th>ST</th>
+                <th>Sales Tax</th>
                 <th>Total</th>
             </tr>
         </thead>
-       <tbody>
-            {% for item in data["items"] %}
+        <tbody>
+            {% for item in data.items %}
             <tr>
                 <td>{{ loop.index }}</td>
+                <td>{{ item.quantity }}</td>
                 <td>{{ item.productDescription }}</td>
                 <td>{{ item.hsCode }}</td>
-                <td>{{ item.quantity }}</td>
+                <td>{{ item.rate }}</td>
                 <td>{{ item.valueSalesExcludingST }}</td>
                 <td>{{ item.salesTaxApplicable }}</td>
                 <td>{{ item.valueSalesExcludingST + item.salesTaxApplicable }}</td>
@@ -41,5 +111,17 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <br><br>
+
+    <table class="footer-table">
+        <tr>
+            <td class="footer-cell"><strong>Sales Tax:</strong> {{ data.totalTax }}</td>
+            <td class="footer-cell"><strong>Inclusive Value:</strong> {{ data.totalInclusive }}</td>
+        </tr>
+    </table>
+
+    <br><br>
+    <p class="right bold">NOOR AGENCY</p>
 </body>
 </html>
