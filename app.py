@@ -13,8 +13,8 @@ from openpyxl.drawing.image import Image as ExcelImage
 import tempfile
 from openpyxl.styles import Font
 from openpyxl.drawing.image import Image as OpenPyxlImage
-import win32com.client as win32
-import pythoncom
+#import win32com.client as win32
+#import pythoncom
 import math
 
 
@@ -419,26 +419,37 @@ def generate_invoice_excel():
     
 
     # ------------------- Save and Return -------------------
+    
+    
     output_excel = f'generated_invoice_{env}.xlsx'
-    output_pdf = f'generated_invoice_{env}.pdf'
-
     wb.save(output_excel)
-    wb.close()  # Close openpyxl workbook before opening it in Excel
+    wb.close()
 
-    # Convert to PDF using Excel
-    pythoncom.CoInitialize()  # Init COM
+    # Return the Excel file directly
+    return send_from_directory(directory='.', path=output_excel, as_attachment=True)
     
-    excel = win32.gencache.EnsureDispatch('Excel.Application')
-    excel.Visible = False
-    wb_pdf = excel.Workbooks.Open(os.path.abspath(output_excel))
-    wb_pdf.ExportAsFixedFormat(0, os.path.abspath(output_pdf))
-    wb_pdf.Close(False)
-    excel.Quit()
     
-    pythoncom.CoUninitialize()  # Uninit COM
+    
+    # output_excel = f'generated_invoice_{env}.xlsx'
+    # output_pdf = f'generated_invoice_{env}.pdf'
 
-    # Return the PDF file
-    return send_from_directory(directory='.', path=output_pdf, as_attachment=True)
+    # wb.save(output_excel)
+    # wb.close()  # Close openpyxl workbook before opening it in Excel
+
+    # # Convert to PDF using Excel
+    # pythoncom.CoInitialize()  # Init COM
+    
+    # excel = win32.gencache.EnsureDispatch('Excel.Application')
+    # excel.Visible = False
+    # wb_pdf = excel.Workbooks.Open(os.path.abspath(output_excel))
+    # wb_pdf.ExportAsFixedFormat(0, os.path.abspath(output_pdf))
+    # wb_pdf.Close(False)
+    # excel.Quit()
+    
+    # pythoncom.CoUninitialize()  # Uninit COM
+
+    # # Return the PDF file
+    # return send_from_directory(directory='.', path=output_pdf, as_attachment=True)
 
 if __name__ == '__main__':
     app.run(debug=True)
