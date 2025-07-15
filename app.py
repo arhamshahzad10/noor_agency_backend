@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, send_from_directory
+from flask import render_template
 from collections import OrderedDict
 import pandas as pd
 import json
@@ -256,12 +257,13 @@ def get_records():
     return jsonify(records)
 
 @app.route('/')
-def dashboard():
-    return send_from_directory('..', 'index.html')
+def index():
+    return render_template('index.html')
 
 @app.route('/dashboard.html')
 def dashboard_html():
-    return send_from_directory('..', 'dashboard.html')
+    return render_template('dashboard.html')
+
 
 
 
