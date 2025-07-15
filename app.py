@@ -14,7 +14,8 @@ from openpyxl.drawing.image import Image as ExcelImage
 import tempfile
 from openpyxl.styles import Font
 from openpyxl.drawing.image import Image as OpenPyxlImage
-import pdfkit
+from weasyprint import HTML
+from flask import make_response
 #import win32com.client as win32
 #import pythoncom
 import math
@@ -430,11 +431,18 @@ def generate_invoice_excel():
 
      # Create HTML string from template
     rendered = render_template("invoice_template.html", data=data)
-    output_pdf = f'generated_invoice_{env}.pdf'
-    config = pdfkit.configuration(wkhtmltopdf=os.path.join(os.getcwd(), 'wkhtmltopdf'))
-    pdfkit.from_string(rendered, output_pdf, configuration=config)
+    
+    # Generate PDF
+    pdf = HTML(string=rendered).write_pdf()
 
-    return send_from_directory(directory='.', path=output_pdf, as_attachment=True)
+    
+    # Return PDF as downloadable file
+    response = make_response(pdf)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = 'attachment; filename=invoice.pdf'
+    return response
+    
+    
     
     
     
