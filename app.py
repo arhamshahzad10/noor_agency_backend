@@ -431,7 +431,8 @@ def generate_invoice_excel():
      # Create HTML string from template
     rendered = render_template("invoice_template.html", data=data)
     output_pdf = f'generated_invoice_{env}.pdf'
-    pdfkit.from_string(rendered, output_pdf)
+    config = pdfkit.configuration(wkhtmltopdf=os.path.join(os.getcwd(), 'wkhtmltopdf'))
+    pdfkit.from_string(rendered, output_pdf, configuration=config)
 
     return send_from_directory(directory='.', path=output_pdf, as_attachment=True)
     
