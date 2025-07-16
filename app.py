@@ -20,7 +20,7 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 CONFIG = {
     "sandbox": {
         "RECORDS_FILE": "records_sandbox.json",
-        "API_TOKEN": "20352731-ac43-3e3b-99a5-f0a592f7ccfc",
+        "API_TOKEN": "2663ec4e-6ccc-35ff-969b-507ab139cd6e",
         "API_URL": "https://gw.fbr.gov.pk/di_data/v1/di/postinvoicedata_sb"
     },
     "production": {
