@@ -406,8 +406,6 @@ def generate_invoice_excel():
 
     # Insert into Excel at E11
     qrimg = ExcelImage(qr_path)
-    qrimg.width = 100  # adjust size as needed
-    qrimg.height = 100
     ws.add_image(qrimg, 'G10')
     
     
@@ -417,8 +415,6 @@ def generate_invoice_excel():
     logo_path = "fbr_logo.png"  # Change path if stored elsewhere
     if os.path.exists(logo_path):
         img = OpenPyxlImage(logo_path)
-        img.width = 100   # Resize width (adjust as needed)
-        img.height = 90  # Resize height (adjust as needed)
         ws.add_image(img, 'F10')  # Place at cell F10
     
     
