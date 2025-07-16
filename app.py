@@ -284,32 +284,7 @@ def dashboard_html():
 
 
 
-
-
-
-def copy_row_format(ws, source_row, target_row):
-    for col in range(1, ws.max_column + 1):
-        source_cell = ws.cell(row=source_row, column=col)
-        target_cell = ws.cell(row=target_row, column=col)
-
-        if isinstance(target_cell, MergedCell):
-            continue  # Skip writing styles to merged cells (avoids crash)
-
-        if source_cell.has_style:
-            target_cell.font = copy(source_cell.font)
-            target_cell.border = copy(source_cell.border)
-            target_cell.fill = copy(source_cell.fill)
-            target_cell.number_format = copy(source_cell.number_format)
-            target_cell.protection = copy(source_cell.protection)
-            target_cell.alignment = copy(source_cell.alignment)
-
-
-
-
-
-
-
-
+# Generate Invoice PDF
 @app.route('/generate-invoice-excel', methods=['GET'])
 def generate_invoice_excel():
     env = get_env()
@@ -318,138 +293,52 @@ def generate_invoice_excel():
 
     data = last_json_data[env]
     items = data['items']
-    template_path = 'template.xlsx'
 
-    if not os.path.exists(template_path):
-        return jsonify({'error': 'Template file not found'}), 404
-
-    wb = load_workbook(template_path)
-    ws = wb.active
-
-    # ------------------- Static Info Mapping -------------------
-    ws['C3'] = data.get('sellerBusinessName', '')
-    ws['C4'] = data.get('sellerAddress', '')
-    ws['C6'] = data.get('sellerProvince', '')
-    ws['C7'] = data.get('sellerNTNCNIC', '')
-
-    ws['C9'] = data.get('buyerBusinessName', '')
-    ws['C10'] = data.get('buyerAddress', '')
-    ws['C11'] = data.get('buyerProvince', '')
-    ws['C12'] = data.get('buyerNTNCNIC', '')
-
-    ws['G5'] = data.get('invoiceRefNo', 'N/A')
-    try:
-        date_obj = datetime.datetime.strptime(data['invoiceDate'], "%Y-%m-%d")
-        ws['G6'] = date_obj.strftime("%d.%m.%Y")
-    except:
-        ws['G6'] = data['invoiceDate']
-
-    # ------------------- Write Line Items Without Spacing -------------------
-    start_row = 17
+    # Calculate totals (in case not done earlier)
     total_excl = 0
     total_tax = 0
 
-    for i, item in enumerate(items):
-        row = start_row + i
-
-        # Copy format from row 17
-        if i > 0:
-            copy_row_format(ws, 17, row)
-
-        ws[f'A{row}'] = i + 1
-        ws[f'B{row}'] = item.get('quantity', '')
-        ws[f'C{row}'] = item.get('productDescription', '')
-        ws[f'D{row}'] = item.get('hsCode', '')
-
-        try:
-            rate = float(str(item.get('rate', '0')).strip('%'))
-        except:
-            rate = 0
-        ws[f'E{row}'] = rate
-
+    for item in items:
         try:
             excl = float(str(item.get('valueSalesExcludingST', 0)).replace(",", ""))
         except:
             excl = 0
-
         try:
             tax = float(str(item.get('salesTaxApplicable', 0)).replace(",", ""))
         except:
             tax = 0
 
-        ws[f'F{row}'] = excl
-        ws[f'G{row}'] = tax
-        ws[f'H{row}'] = excl + tax
-
         total_excl += excl
         total_tax += tax
-        
-        data["totalTax"] = total_tax
-        data["totalInclusive"] = total_excl + total_tax
 
-    # ------------------- Custom TOTAL Row (Manually Appended) -------------------
-    total_row = start_row + len(items)
+    # Add totals to data so template can use them
+    data["totalTax"] = total_tax
+    data["totalInclusive"] = total_excl + total_tax
 
-    # Apply same style from previous row (optional)
-    copy_row_format(ws, 17, total_row)
+    # Get FBR invoice number
+    fbr_invoice = data.get("fbrInvoiceNumber", "")
 
-    ws[f'E{total_row}'] = "TOTAL"
-    ws[f'F{total_row}'] = total_excl
-    ws[f'G{total_row}'] = total_tax
-    ws[f'H{total_row}'] = total_excl + total_tax
-
-    # ------------------- Footer Values (Optional) -------------------
-    ws['D25'] = total_tax
-    ws['D26'] = total_excl + total_tax
-    
-    
-    
-    
-    
-    
-    # --- Add FBR Invoice Number & QR Code ---
-    fbr_invoice = data.get("fbrInvoiceNumber")
+    # --- Generate QR Code as base64 ---
+    qr_base64 = ""
     if fbr_invoice:
-        ws['G8'] = fbr_invoice
-        ws['G8'].font = Font(bold=True, size=10)
+        qr = qrcode.make(fbr_invoice)
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            qr_path = tmp.name
+            qr.save(qr_path)
 
-    # Generate QR code
-    qr = qrcode.make(fbr_invoice)
-    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
-        qr_path = tmp.name
-        qr.save(qr_path)
+        with open(qr_path, "rb") as qr_file:
+            qr_base64 = base64.b64encode(qr_file.read()).decode("utf-8")
 
-    # Insert into Excel at E11
-    qrimg = ExcelImage(qr_path)
-    ws.add_image(qrimg, 'G10')
-    
-    
-    
-    
-    # Insert FBR logo image
-    logo_path = "fbr_logo.png"  # Change path if stored elsewhere
+        os.remove(qr_path)
+
+    # --- Load FBR logo as base64 ---
+    logo_path = "fbr_logo.png"
+    logo_base64 = ""
     if os.path.exists(logo_path):
-        img = OpenPyxlImage(logo_path)
-        ws.add_image(img, 'F10')  # Place at cell F10
-    
-    
-    
+        with open(logo_path, "rb") as logo_file:
+            logo_base64 = base64.b64encode(logo_file.read()).decode("utf-8")
 
-    # ------------------- Save and Return -------------------
-    
-    
-    output_excel = f'generated_invoice_{env}.xlsx'
-    wb.save(output_excel)
-    wb.close()
-    
-    # Load and convert QR image to base64
-    with open(qr_path, "rb") as qr_file:
-        qr_base64 = base64.b64encode(qr_file.read()).decode('utf-8')
-
-    # Load and convert FBR logo to base64
-    with open(logo_path, "rb") as logo_file:
-        logo_base64 = base64.b64encode(logo_file.read()).decode('utf-8')
-
+    # --- Render HTML invoice ---
     rendered_html = render_template(
         'invoice_template.html',
         data=data,
@@ -457,37 +346,13 @@ def generate_invoice_excel():
         logo_base64=logo_base64
     )
 
-    # Use WeasyPrint to generate PDF from the rendered HTML
+    # --- Generate PDF ---
     pdf_file_path = 'invoice.pdf'
     HTML(string=rendered_html).write_pdf(pdf_file_path)
-
 
     return send_file(pdf_file_path, as_attachment=True)
 
     
     
-    
-    
-    # output_excel = f'generated_invoice_{env}.xlsx'
-    # output_pdf = f'generated_invoice_{env}.pdf'
-
-    # wb.save(output_excel)
-    # wb.close()  # Close openpyxl workbook before opening it in Excel
-
-    # # Convert to PDF using Excel
-    # pythoncom.CoInitialize()  # Init COM
-    
-    # excel = win32.gencache.EnsureDispatch('Excel.Application')
-    # excel.Visible = False
-    # wb_pdf = excel.Workbooks.Open(os.path.abspath(output_excel))
-    # wb_pdf.ExportAsFixedFormat(0, os.path.abspath(output_pdf))
-    # wb_pdf.Close(False)
-    # excel.Quit()
-    
-    # pythoncom.CoUninitialize()  # Uninit COM
-
-    # # Return the PDF file
-    # return send_from_directory(directory='.', path=output_pdf, as_attachment=True)
-
 if __name__ == '__main__':
     app.run(debug=True)
