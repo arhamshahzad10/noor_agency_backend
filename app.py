@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, send_file, send_from_directory
+from flask import Flask, render_template, request, jsonify, send_file
 from flask import render_template
 from collections import OrderedDict
 import pandas as pd
@@ -6,16 +6,9 @@ import json
 import os
 import datetime
 import requests
-from openpyxl import load_workbook
-from copy import copy
-from openpyxl.cell.cell import MergedCell
 import qrcode
-from openpyxl.drawing.image import Image as ExcelImage
 import tempfile
-from openpyxl.styles import Font
-from openpyxl.drawing.image import Image as OpenPyxlImage
 from weasyprint import HTML
-from flask import make_response
 import math
 import base64
 
@@ -69,6 +62,16 @@ def save_records(env, records):
 last_uploaded_file = {}
 last_json_data = {}
 
+
+# Get all past records
+@app.route('/records', methods=['GET'])
+def get_records():
+    env = get_env()
+    records = load_records(env)
+    return jsonify(records)
+
+
+
 #  Upload Excel File
 @app.route('/upload-excel', methods=['POST'])
 def upload_excel():
@@ -80,7 +83,6 @@ def upload_excel():
     file.save(filepath)
     last_uploaded_file[env] = filepath
     return jsonify({'message': 'File uploaded successfully'})
-
 
 
 
@@ -176,21 +178,19 @@ def get_json():
         ("buyerRegistrationType", safe(section_data.get("buyerRegistrationType"))),
         ("invoiceRefNo", str(safe(section_data.get("invoiceRefNo", "")))),  # critical fix
         ("scenarioId", safe(section_data.get("scenarioId"))),
-        ("items", items)
     ])
+    
+    # Only include scenarioId if sandbox
+    if env == 'sandbox':
+        invoice_json["scenarioId"] = safe(section_data.get("scenarioId"))
+
+    invoice_json["items"] = items
 
     last_json_data[env] = invoice_json
     return app.response_class(
         response=json.dumps(invoice_json, indent=2, allow_nan=False),
         mimetype='application/json'
     )
-
-
-
-
-
-
-
 
 
 
@@ -265,23 +265,6 @@ def submit_fbr():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Get all past records
-@app.route('/records', methods=['GET'])
-def get_records():
-    env = get_env()
-    records = load_records(env)
-    return jsonify(records)
-
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-@app.route('/dashboard.html')
-def dashboard_html():
-    return render_template('dashboard.html')
-
-
-
 
 
 # Generate Invoice PDF
@@ -352,6 +335,16 @@ def generate_invoice_excel():
 
     return send_file(pdf_file_path, as_attachment=True)
 
+
+
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/dashboard.html')
+def dashboard_html():
+    return render_template('dashboard.html')
     
     
 if __name__ == '__main__':
