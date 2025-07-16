@@ -348,15 +348,16 @@
 
         // On page load, fetch records
         document.addEventListener('DOMContentLoaded', function () {
-            const env = window.localStorage.getItem('erp_env');
-            if (!env) {
-                // 🚫 Prevent access if session/localStorage is cleared
-                window.location.replace('/');
-                return;
-            }
+        let env = window.localStorage.getItem('erp_env');
 
-            loadRecords(); // only if logged in
-        });
+        if (!env) {
+            // Fallback to default session env (server sets this)
+            env = 'sandbox';
+            window.localStorage.setItem('erp_env', env);
+        }
+
+        loadRecords();
+    });
 
         // Load past records from backend
         function loadRecords() {
