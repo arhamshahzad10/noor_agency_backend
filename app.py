@@ -23,6 +23,7 @@ app.config['UPLOAD_FOLDER'] = 'uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 app.secret_key = os.getenv("SECRET_KEY", "myfallbacksecret")
+app.config['SESSION_COOKIE_SECURE'] = True
 
 CONFIG = {
     "sandbox": {
