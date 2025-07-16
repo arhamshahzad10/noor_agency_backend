@@ -13,17 +13,23 @@ from weasyprint import HTML
 import math
 import base64
 import psycopg2
+from flask_cors import CORS
 
 
 app = Flask(__name__)
+CORS(app, supports_credentials=True)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Update session configuration
 app.secret_key = os.getenv("SECRET_KEY", "myfallbacksecret")
-app.config['SESSION_COOKIE_SECURE'] = True  # Change this to False for development
-app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(days=1)  # Add session lifetime
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Add SameSite policy
+app.config.update(
+    SESSION_COOKIE_SECURE=True,  # Keep True for HTTPS
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    PERMANENT_SESSION_LIFETIME=datetime.timedelta(days=1),
+    SESSION_COOKIE_DOMAIN=os.getenv('SESSION_COOKIE_DOMAIN', None)  # Add this line
+)
 
 CONFIG = {
     "sandbox": {
@@ -129,6 +135,15 @@ def login():
 def before_request():
     print("Current session:", dict(session))
     print("Current endpoint:", request.endpoint)
+    
+    # List of routes that don't require authentication
+    public_routes = ['index', 'login', 'static']
+    
+    # Check if route needs protection
+    if request.endpoint and request.endpoint not in public_routes:
+        if 'user_id' not in session:
+            print("No user_id in session, redirecting to login")
+            return redirect(url_for('index'))
 
 # Get all past records
 @app.route('/records', methods=['GET'])
@@ -411,10 +426,15 @@ def index():
 
 @app.route('/dashboard.html')
 def dashboard_html():
-    print("Checking session:", session.get('user_id'))
+    print("Dashboard access attempt")
+    print("Full session data:", dict(session))
+    print("User ID in session:", session.get('user_id'))
+    
     if 'user_id' not in session:
         print("No user_id in session, redirecting to login")
         return redirect(url_for('index'))
+    
+    print("Access granted to dashboard")
     return render_template('dashboard.html')
 
 @app.route('/logout')
