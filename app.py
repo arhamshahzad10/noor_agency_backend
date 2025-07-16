@@ -211,11 +211,26 @@ def submit_fbr():
 
     try:
         response = requests.post(api_url, headers=headers, json=last_json_data[env])
-        res_json = response.json()
+        
+        # Try parsing response
+        try:
+            res_json = response.json()
+        except Exception:
+            res_json = {}
 
+        # Extract invoice number if available
         invoice_no = res_json.get("invoiceNumber", "N/A")
         last_json_data[env]["fbrInvoiceNumber"] = invoice_no
         is_success = bool(invoice_no and invoice_no != "N/A")
+        
+        if not is_success:
+            return jsonify({
+                "status": "Failed",
+                "status_code": response.status_code,
+                "response_text": response.text
+            }), 400
+
+ 
         status = "Success" if is_success else "Failed"
         date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         invoice_date = last_json_data[env].get("invoiceDate", "")

@@ -545,22 +545,29 @@
                     loadingSpinner.classList.add('hidden');
 
                     // Show the raw API response in the modal (pretty-printed)
-                    let responseText = typeof data === 'object'
-                        ? JSON.stringify(data, null, 2)
-                        : data;
+                    let responseText = '';
+                    if (typeof data === 'object') {
+                        if (data.response_text) {
+                            responseText = data.response_text;
+                        } else {
+                            responseText = JSON.stringify(data, null, 2);
+                        }
+                    } else {
+                        responseText = data;
+                    }
 
                     let fullResponse = `Response Code: ${status}\nResponse Content:\n${responseText}`;
 
                     // Only check for invoiceNumber in the response
-                    if (data && typeof data === 'object' && data.invoiceNumber && data.invoiceNumber !== "N/A") {
+                    const isSuccess = data && typeof data === 'object' && data.status === "Success" && data.invoiceNumber && data.invoiceNumber !== "N/A";
+
+                    if (isSuccess) {
                         successIcon.classList.remove('hidden');
                         document.getElementById('invoice-number-success').textContent = fullResponse;
-                        // Reload records after successful submission (table will show as "Success" if invoiceNumber is present)
                         loadRecords();
                     } else {
                         failedIcon.classList.remove('hidden');
                         document.getElementById('error-message').textContent = fullResponse;
-                        // Reload records to reflect any failed attempt if needed
                         loadRecords();
                     }
                 })
