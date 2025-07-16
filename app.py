@@ -25,8 +25,8 @@ CONFIG = {
     },
     "production": {
         "RECORDS_FILE": "records_production.json",
-        "API_TOKEN": "PRODUCTION_TOKEN",
-        "API_URL": "https://production-url.example.com"
+        "API_TOKEN": "9d8d7913-df77-3446-abef-86ae4a3e7017",
+        "API_URL": "https://gw.fbr.gov.pk/di_data/v1/di/postinvoicedata"
     }
 }
 
