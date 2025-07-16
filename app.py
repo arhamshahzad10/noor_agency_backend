@@ -25,8 +25,10 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 # Update session configuration
 app.secret_key = os.getenv("SECRET_KEY", "myfallbacksecret")
+print(app.secret_key)  # Debugging line to check secret key
+
 app.config.update(
-    SESSION_COOKIE_SECURE=request.is_secure,  # ✅ Automatically detect HTTPS
+    SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE", "false").lower() == "true"
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax',
     PERMANENT_SESSION_LIFETIME=datetime.timedelta(days=1),
