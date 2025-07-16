@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, jsonify, send_file
 from flask import render_template
+from flask import session, redirect, url_for
 from collections import OrderedDict
 import pandas as pd
 import json
@@ -20,6 +21,8 @@ import psycopg2
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+app.secret_key = os.getenv("SECRET_KEY", "myfallbacksecret")
 
 CONFIG = {
     "sandbox": {
@@ -78,18 +81,45 @@ last_uploaded_file = {}
 last_json_data = {}
 
 
-@app.route('/test-db')
-def test_db():
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("SELECT version();")
-        db_version = cur.fetchone()
+
+# Login route
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.form.get('username')
+    password = request.form.get('password')
+    env = request.form.get('environment')
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id FROM users WHERE username = %s AND password_hash = %s", (username, password))
+    user = cur.fetchone()
+
+    if not user:
         cur.close()
         conn.close()
-        return jsonify({"db_version": db_version})
-    except Exception as e:
-        return jsonify({"error": str(e)})
+        return render_template('index.html', error="Invalid username or password")
+
+    user_id = user[0]
+
+    cur.execute("SELECT id FROM clients WHERE user_id = %s", (user_id,))
+    client = cur.fetchone()
+    cur.close()
+    conn.close()
+
+    if not client:
+        return render_template('index.html', error="Client info missing")
+
+    session['user_id'] = user_id
+    session['client_id'] = client[0]
+    session['env'] = env
+
+    return redirect(url_for('dashboard_html'))
+
+
+
+
+
+
 
 
 # Get all past records
@@ -373,7 +403,14 @@ def index():
 
 @app.route('/dashboard.html')
 def dashboard_html():
+    if 'user_id' not in session:
+        return redirect(url_for('index'))
     return render_template('dashboard.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('index'))
     
     
 if __name__ == '__main__':
