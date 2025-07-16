@@ -15,15 +15,15 @@ import base64
 import psycopg2
 
 
-
-    
-
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+# Update session configuration
 app.secret_key = os.getenv("SECRET_KEY", "myfallbacksecret")
-app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_SECURE'] = True  # Change this to False for development
+app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(days=1)  # Add session lifetime
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Add SameSite policy
 
 CONFIG = {
     "sandbox": {
@@ -114,19 +114,21 @@ def login():
         print("No client linked to this user.")
         return render_template('index.html', error="Client info missing")
 
+    # Make session permanent and set values
+    session.permanent = True
     session['user_id'] = user_id
     session['client_id'] = client[0]
     session['env'] = env
-
+    
+    print("Session created with user_id:", session.get('user_id'))
     return redirect(url_for('dashboard_html'))
 
 
 
-
-
-
-
-
+@app.before_request
+def before_request():
+    print("Current session:", dict(session))
+    print("Current endpoint:", request.endpoint)
 
 # Get all past records
 @app.route('/records', methods=['GET'])
@@ -409,7 +411,9 @@ def index():
 
 @app.route('/dashboard.html')
 def dashboard_html():
+    print("Checking session:", session.get('user_id'))
     if 'user_id' not in session:
+        print("No user_id in session, redirecting to login")
         return redirect(url_for('index'))
     return render_template('dashboard.html')
 
