@@ -368,6 +368,9 @@ def generate_invoice_excel():
 
         total_excl += excl
         total_tax += tax
+        
+        data["totalTax"] = total_tax
+        data["totalInclusive"] = total_excl + total_tax
 
     # ------------------- Custom TOTAL Row (Manually Appended) -------------------
     total_row = start_row + len(items)

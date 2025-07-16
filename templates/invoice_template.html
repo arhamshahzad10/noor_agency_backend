@@ -51,12 +51,14 @@
 </head>
 <body>
 
-    <h2 class="center">SALES TAX INVOICE</h2>
+    <div style="border: 2px solid black; padding: 5px; text-align: center; font-size: 16px; font-weight: bold; margin-bottom: 10px;">
+    SALES TAX INVOICE
+    </div>
 
 <table style="width: 100%; margin-bottom: 20px;">
     <tr>
         <!-- LEFT: Seller Info -->
-        <td style="width: 60%; vertical-align: top;">
+        <td style="width: 60%; vertical-align: top; border: 1px solid black; padding: 10px;">
             <p><span class="bold">Seller Name:</span> {{ data.sellerBusinessName }}</p>
             <p><span class="bold">Seller Address:</span> {{ data.sellerAddress }}</p>
             <p><span class="bold">City:</span> {{ data.city or "Lahore" }}</p>
@@ -75,13 +77,13 @@
                 <tr>
                     {% if qr_base64 %}
                     <td style="text-align: center;">
-                        <img src="data:image/png;base64,{{ qr_base64 }}" width="90" height="90" alt="QR Code">
+                        <img src="data:image/png;base64,{{ qr_base64 }}" width="40" height="20" alt="QR Code">
                     </td>
                     {% endif %}
 
                     {% if logo_base64 %}
                     <td style="text-align: center;">
-                        <img src="data:image/png;base64,{{ logo_base64 }}" width="90" height="45" alt="FBR Logo">
+                        <img src="data:image/png;base64,{{ logo_base64 }}" width="40" height="20" alt="FBR Logo">
                     </td>
                     {% endif %}
                 </tr>
