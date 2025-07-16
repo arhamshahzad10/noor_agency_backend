@@ -82,12 +82,13 @@ last_json_data = {}
 
 
 
-# Login route
 @app.route('/login', methods=['POST'])
 def login():
     username = request.form.get('username')
     password = request.form.get('password')
     env = request.form.get('environment')
+
+    print("Trying to log in with:", username, password)
 
     conn = get_db_connection()
     cur = conn.cursor()
@@ -95,11 +96,13 @@ def login():
     user = cur.fetchone()
 
     if not user:
+        print("No user found.")
         cur.close()
         conn.close()
         return render_template('index.html', error="Invalid username or password")
 
     user_id = user[0]
+    print("User ID found:", user_id)
 
     cur.execute("SELECT id FROM clients WHERE user_id = %s", (user_id,))
     client = cur.fetchone()
@@ -107,6 +110,7 @@ def login():
     conn.close()
 
     if not client:
+        print("No client linked to this user.")
         return render_template('index.html', error="Client info missing")
 
     session['user_id'] = user_id
@@ -114,6 +118,7 @@ def login():
     session['env'] = env
 
     return redirect(url_for('dashboard_html'))
+
 
 
 
