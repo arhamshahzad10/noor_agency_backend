@@ -11,7 +11,11 @@ import tempfile
 from weasyprint import HTML
 import math
 import base64
+import psycopg2
 
+
+
+    
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -25,10 +29,21 @@ CONFIG = {
     },
     "production": {
         "RECORDS_FILE": "records_production.json",
-        "API_TOKEN": "9d8d7913-df77-3446-abef-86ae4a3e7017",
+        "API_TOKEN": "",
         "API_URL": "https://gw.fbr.gov.pk/di_data/v1/di/postinvoicedata"
     }
 }
+
+
+
+def get_db_connection():
+    return psycopg2.connect(
+        host=os.getenv("DB_HOST"),
+        database=os.getenv("DB_NAME"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        port=os.getenv("DB_PORT")
+    )
 
 def get_env():
     env = request.args.get('env') or request.headers.get('X-ERP-ENV') or 'sandbox'
@@ -61,6 +76,20 @@ def save_records(env, records):
 # Store last uploaded file and last JSON per environment
 last_uploaded_file = {}
 last_json_data = {}
+
+
+@app.route('/test-db')
+def test_db():
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT version();")
+        db_version = cur.fetchone()
+        cur.close()
+        conn.close()
+        return jsonify({"db_version": db_version})
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 
 # Get all past records
