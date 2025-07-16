@@ -23,7 +23,9 @@ app.config['UPLOAD_FOLDER'] = 'uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 app.secret_key = os.getenv("SECRET_KEY", "myfallbacksecret")
-app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_SECURE'] = True     # Needed for HTTPS (Render)
+app.config['SESSION_COOKIE_HTTPONLY'] = True   # Prevent JS access to cookies
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Good default for web apps
 
 CONFIG = {
     "sandbox": {
