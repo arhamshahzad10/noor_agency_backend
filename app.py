@@ -9,7 +9,7 @@ import datetime
 import requests
 import qrcode
 import tempfile
-# from weasyprint import HTML
+from weasyprint import HTML
 import math
 import base64
 import psycopg2
@@ -36,18 +36,37 @@ app.config.update(
     SESSION_COOKIE_PATH='/'
 )
 
-CONFIG = {
-    "sandbox": {
-        "RECORDS_FILE": "records_sandbox.json",
-        "API_TOKEN": "2663ec4e-6ccc-35ff-969b-507ab139cd6e",
-        "API_URL": "https://gw.fbr.gov.pk/di_data/v1/di/postinvoicedata_sb"
-    },
-    "production": {
-        "RECORDS_FILE": "records_production.json",
-        "API_TOKEN": "",
-        "API_URL": "https://gw.fbr.gov.pk/di_data/v1/di/postinvoicedata"
-    }
-}
+
+def get_client_config(client_id, env):
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        SELECT sandbox_api_url, sandbox_api_token, production_api_url, production_api_token
+        FROM clients
+        WHERE id = %s
+    """, (client_id,))
+    row = cur.fetchone()
+    
+    cur.close()
+    conn.close()
+
+    if not row:
+        raise Exception("Client configuration not found")
+
+    sandbox_api_url, sandbox_api_token, production_api_url, production_api_token = row
+
+    if env == "sandbox":
+        return {
+            "api_url": sandbox_api_url,
+            "api_token": sandbox_api_token
+        }
+    else:
+        return {
+            "api_url": production_api_url,
+            "api_token": production_api_token
+        }
+
 
 
 
@@ -62,31 +81,8 @@ def get_db_connection():
 
 def get_env():
     env = request.args.get('env') or request.headers.get('X-ERP-ENV') or 'sandbox'
-    return env if env in CONFIG else 'sandbox'
+    return env if env in ['sandbox', 'production'] else 'sandbox'
 
-def get_records_file(env):
-    return CONFIG[env]['RECORDS_FILE']
-
-def get_api_token(env):
-    return CONFIG[env]['API_TOKEN']
-
-def get_api_url(env):
-    return CONFIG[env]['API_URL']
-
-def load_records(env):
-    file = get_records_file(env)
-    if os.path.exists(file):
-        with open(file, 'r') as f:
-            try:
-                return json.load(f)
-            except Exception:
-                return []
-    return []
-
-def save_records(env, records):
-    file = get_records_file(env)
-    with open(file, 'w') as f:
-        json.dump(records, f, indent=2)
 
 # Store last uploaded file and last JSON per environment
 last_uploaded_file = {}
@@ -104,7 +100,7 @@ def login():
 
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute("SELECT id FROM users WHERE username = %s AND password_hash = %s", (username, password))
+    cur.execute("SELECT id, name FROM users WHERE username = %s AND password_hash = %s", (username, password))
     user = cur.fetchone()
 
     if not user:
@@ -114,6 +110,7 @@ def login():
         return render_template('index.html', error="Invalid username or password")
 
     user_id = user[0]
+    name = user[1]
     print("User ID found:", user_id)
 
     cur.execute("SELECT id FROM clients WHERE user_id = %s", (user_id,))
@@ -130,6 +127,7 @@ def login():
     session['user_id'] = user_id
     session['client_id'] = client[0]
     session['env'] = env
+    session['name'] = name
     
     print("Session created with user_id:", session.get('user_id'))
     return redirect(url_for('dashboard_html'))
@@ -150,12 +148,78 @@ def before_request():
             print("No user_id in session, redirecting to login")
             return redirect(url_for('index'))
 
-# Get all past records
+
+import json
+
 @app.route('/records', methods=['GET'])
 def get_records():
     env = get_env()
-    records = load_records(env)
+    client_id = session.get('client_id')
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT invoice_data, fbr_response, status, created_at
+        FROM invoices
+        WHERE client_id = %s AND env = %s
+        ORDER BY created_at DESC
+    """, (client_id, env))
+
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    records = []
+    for idx, row in enumerate(rows, start=1):
+        invoice_data_raw, fbr_response_raw, status, created_at = row
+
+        # Ensure parsed JSON objects
+        try:
+            invoicedata = json.loads(invoice_data_raw) if isinstance(invoice_data_raw, str) else invoice_data_raw
+        except Exception:
+            invoicedata = {}
+
+        try:
+            fbr_response = json.loads(fbr_response_raw) if isinstance(fbr_response_raw, str) else fbr_response_raw
+        except Exception:
+            fbr_response = {}
+
+        try:
+            items = invoicedata.get("items", [])
+            item = items[0] if items else {}
+
+            value_sales_ex_st = float(item.get("valueSalesExcludingST", 0) or 0)
+            sales_tax_applicable = float(item.get("salesTaxApplicable", 0) or 0)
+
+            record = {
+                "sr": idx,
+                "invoiceReference": (
+                    invoicedata.get("fbrInvoiceNumber")
+                    or fbr_response.get("invoiceNumber")
+                    or "N/A"
+                ),
+                "invoiceType": invoicedata.get("invoiceType", ""),
+                "invoiceDate": invoicedata.get("invoiceDate", ""),
+                "buyerName": invoicedata.get("buyerBusinessName", ""),
+                "sellerName": invoicedata.get("sellerBusinessName", ""),
+                "totalValue": value_sales_ex_st + sales_tax_applicable,
+                "valueSalesExcludingST": value_sales_ex_st,
+                "salesTaxApplicable": sales_tax_applicable,
+                "status": status,
+                "date": created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                "items": items
+            }
+
+            records.append(record)
+        except Exception as e:
+            print(f"Error parsing row #{idx}: {e}")
+            continue
+
     return jsonify(records)
+
+
+
 
 
 
@@ -281,35 +345,37 @@ def get_json():
 
 
 
-# Submit JSON to FBR
 @app.route('/submit-fbr', methods=['POST'])
 def submit_fbr():
     env = get_env()
-    records = load_records(env)
     if env not in last_json_data:
         return jsonify({'error': 'No JSON to submit'}), 400
 
-    api_token = get_api_token(env)
-    api_url = get_api_url(env)
+    client_id = session.get("client_id")
+    config = get_client_config(client_id, env)
+    api_url = config["api_url"]
+    api_token = config["api_token"]
+
     headers = {
         "Authorization": f"Bearer {api_token}",
         "Content-Type": "application/json"
     }
 
     try:
+        # Send request to FBR
         response = requests.post(api_url, headers=headers, json=last_json_data[env])
         
-        # Try parsing response
+        # Parse response
         try:
             res_json = response.json()
         except Exception:
             res_json = {}
 
-        # Extract invoice number if available
         invoice_no = res_json.get("invoiceNumber", "N/A")
         last_json_data[env]["fbrInvoiceNumber"] = invoice_no
         is_success = bool(invoice_no and invoice_no != "N/A")
-        
+
+        # If failed, return error without inserting into DB
         if not is_success:
             return jsonify({
                 "status": "Failed",
@@ -317,8 +383,8 @@ def submit_fbr():
                 "response_text": response.text
             }), 400
 
- 
-        status = "Success" if is_success else "Failed"
+        # Extract values
+        status = "Success"
         date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         invoice_date = last_json_data[env].get("invoiceDate", "")
         item = last_json_data[env]["items"][0]
@@ -326,23 +392,24 @@ def submit_fbr():
         sales_tax_applicable = float(item.get("salesTaxApplicable", 0))
         total_value = value_sales_ex_st + sales_tax_applicable
 
-        record = {
-            "sr": len(records) + 1,
-            "invoiceReference": invoice_no,
-            "invoiceType": last_json_data[env]["invoiceType"],
-            "invoiceDate": invoice_date,
-            "buyerName": last_json_data[env]["buyerBusinessName"],
-            "sellerName": last_json_data[env]["sellerBusinessName"],
-            "totalValue": total_value,
-            "valueSalesExcludingST": value_sales_ex_st,
-            "salesTaxApplicable": sales_tax_applicable,
-            "status": status,
-            "date": date,
-            "items": last_json_data[env]["items"]
-        }
-        records.append(record)
-        save_records(env, records)
+        # Insert into invoices table in Supabase
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO invoices (client_id, env, invoice_data, fbr_response, status, created_at)
+            VALUES (%s, %s, %s, %s, %s, NOW())
+        """, (
+            client_id,
+            env,
+            json.dumps(last_json_data[env]),
+            json.dumps(res_json),
+            status
+        ))
+        conn.commit()
+        cur.close()
+        conn.close()
 
+        # Return response
         return jsonify({
             "status": status,
             "invoiceNumber": invoice_no,
@@ -355,81 +422,78 @@ def submit_fbr():
 
 
 # Generate Invoice PDF
-# @app.route('/generate-invoice-excel', methods=['GET'])
-# def generate_invoice_excel():
-#     env = get_env()
-#     if env not in last_json_data:
-#         return jsonify({'error': 'No JSON data to generate invoice'}), 400
+@app.route('/generate-invoice-excel', methods=['GET'])
+def generate_invoice_excel():
+    env = get_env()
+    if env not in last_json_data:
+        return jsonify({'error': 'No JSON data to generate invoice'}), 400
 
-#     data = last_json_data[env]
-#     items = data['items']
+    data = last_json_data[env]
+    items = data['items']
 
-#     # Calculate totals (in case not done earlier)
-#     total_excl = 0
-#     total_tax = 0
+    # Calculate totals (in case not done earlier)
+    total_excl = 0
+    total_tax = 0
 
-#     for item in items:
-#         try:
-#             excl = float(str(item.get('valueSalesExcludingST', 0)).replace(",", ""))
-#         except:
-#             excl = 0
-#         try:
-#             tax = float(str(item.get('salesTaxApplicable', 0)).replace(",", ""))
-#         except:
-#             tax = 0
+    for item in items:
+        try:
+            excl = float(str(item.get('valueSalesExcludingST', 0)).replace(",", ""))
+        except:
+            excl = 0
+        try:
+            tax = float(str(item.get('salesTaxApplicable', 0)).replace(",", ""))
+        except:
+            tax = 0
 
-#         total_excl += excl
-#         total_tax += tax
+        total_excl += excl
+        total_tax += tax
 
-#     # Add totals to data so template can use them
-#     data["totalTax"] = total_tax
-#     data["totalInclusive"] = total_excl + total_tax
+    # Add totals to data so template can use them
+    data["totalTax"] = total_tax
+    data["totalInclusive"] = total_excl + total_tax
 
-#     # Get FBR invoice number
-#     fbr_invoice = data.get("fbrInvoiceNumber", "")
+    # Get FBR invoice number
+    fbr_invoice = data.get("fbrInvoiceNumber", "")
 
-#     # --- Generate QR Code as base64 ---
-#     qr_base64 = ""
-#     if fbr_invoice:
-#         qr = qrcode.make(fbr_invoice)
-#         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
-#             qr_path = tmp.name
-#             qr.save(qr_path)
+    # --- Generate QR Code as base64 ---
+    qr_base64 = ""
+    if fbr_invoice:
+        qr = qrcode.make(fbr_invoice)
+        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+            qr_path = tmp.name
+            qr.save(qr_path)
 
-#         with open(qr_path, "rb") as qr_file:
-#             qr_base64 = base64.b64encode(qr_file.read()).decode("utf-8")
+        with open(qr_path, "rb") as qr_file:
+            qr_base64 = base64.b64encode(qr_file.read()).decode("utf-8")
 
-#         os.remove(qr_path)
+        os.remove(qr_path)
 
-#     # --- Load FBR logo as base64 ---
-#     logo_path = "fbr_logo.png"
-#     logo_base64 = ""
-#     if os.path.exists(logo_path):
-#         with open(logo_path, "rb") as logo_file:
-#             logo_base64 = base64.b64encode(logo_file.read()).decode("utf-8")
+    # --- Load FBR logo as base64 ---
+    logo_path = "fbr_logo.png"
+    logo_base64 = ""
+    if os.path.exists(logo_path):
+        with open(logo_path, "rb") as logo_file:
+            logo_base64 = base64.b64encode(logo_file.read()).decode("utf-8")
 
-#     # --- Render HTML invoice ---
-#     rendered_html = render_template(
-#         'invoice_template.html',
-#         data=data,
-#         qr_base64=qr_base64,
-#         logo_base64=logo_base64
-#     )
+    # --- Render HTML invoice ---
+    rendered_html = render_template(
+        'invoice_template.html',
+        data=data,
+        qr_base64=qr_base64,
+        logo_base64=logo_base64
+    )
 
-#     # --- Generate PDF ---
-#     pdf_file_path = 'invoice.pdf'
-#     HTML(string=rendered_html).write_pdf(pdf_file_path)
+    # --- Generate PDF ---
+    pdf_file_path = 'invoice.pdf'
+    HTML(string=rendered_html).write_pdf(pdf_file_path)
 
-#     return send_file(pdf_file_path, as_attachment=True)
+    return send_file(pdf_file_path, as_attachment=True)
 
 
 
 
 @app.route('/')
 def index():
-    # # If user is already logged in, redirect to dashboard
-    # if 'user_id' in session:
-    #     return redirect(url_for('dashboard_html'))
     return render_template('index.html')
 
 @app.route('/dashboard.html')
