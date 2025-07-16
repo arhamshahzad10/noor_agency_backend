@@ -55,20 +55,27 @@
 
     <table class="info-table">
         <tr>
-            <td>
+            <td style="width: 60%;">
                 <p><span class="bold">Seller Name:</span> {{ data.sellerBusinessName }}</p>
                 <p><span class="bold">Seller Address:</span> {{ data.sellerAddress }}</p>
                 <p><span class="bold">City:</span> {{ data.city or "Lahore" }}</p>
                 <p><span class="bold">Province:</span> {{ data.sellerProvince }}</p>
-                <p><span class="bold">NTN/CNIC:</span> {{ data.sellerNTNCNIC }}</p>
+                <p><span class="bold">sellerNTNCNIC:</span> {{ data.sellerNTNCNIC }}</p>
             </td>
-            <td class="right">
-                <p><span class="bold">Invoice No:</span> {{ data.invoiceRefNo }}</p>
-                <p><span class="bold">Invoice Date:</span> {{ data.invoiceDate }}</p>
+            <td style="width: 40%; text-align: right;">
+                <p><span class="bold">invoiceNo:</span> {{ data.invoiceRefNo }}</p>
+                <p><span class="bold">invoiceDate:</span> {{ data.invoiceDate }}</p>
                 <p><span class="bold">FBR Invoice No:</span> {{ data.fbrInvoiceNumber or "" }}</p>
+                {% if logo_base64 %}
+                    <img src="data:image/png;base64,{{ logo_base64 }}" width="100" height="90" alt="FBR Logo" style="margin-top: 10px;"><br>
+                {% endif %}
+                {% if qr_base64 %}
+                    <img src="data:image/png;base64,{{ qr_base64 }}" width="100" height="100" alt="QR Code" style="margin-top: 5px;">
+                {% endif %}
             </td>
         </tr>
     </table>
+
 
     <div class="section-title">Buyer Details</div>
     <table class="info-table">

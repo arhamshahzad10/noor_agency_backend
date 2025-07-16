@@ -16,9 +16,8 @@ from openpyxl.styles import Font
 from openpyxl.drawing.image import Image as OpenPyxlImage
 from weasyprint import HTML
 from flask import make_response
-#import win32com.client as win32
-#import pythoncom
 import math
+import base64
 
 
 app = Flask(__name__)
@@ -428,9 +427,21 @@ def generate_invoice_excel():
     output_excel = f'generated_invoice_{env}.xlsx'
     wb.save(output_excel)
     wb.close()
+    
+    # Load and convert QR image to base64
+    with open(qr_path, "rb") as qr_file:
+        qr_base64 = base64.b64encode(qr_file.read()).decode('utf-8')
 
-    # Render the HTML template with data
-    rendered_html = render_template('invoice_template.html', data=data, qr_path=qr_path, logo_path="fbr_logo.png")
+    # Load and convert FBR logo to base64
+    with open(logo_path, "rb") as logo_file:
+        logo_base64 = base64.b64encode(logo_file.read()).decode('utf-8')
+
+    rendered_html = render_template(
+        'invoice_template.html',
+        data=data,
+        qr_base64=qr_base64,
+        logo_base64=logo_base64
+    )
 
     # Use WeasyPrint to generate PDF from the rendered HTML
     pdf_file_path = 'invoice.pdf'
