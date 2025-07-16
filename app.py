@@ -28,7 +28,8 @@ app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax',
     PERMANENT_SESSION_LIFETIME=datetime.timedelta(days=1),
-    SESSION_COOKIE_DOMAIN=os.getenv('SESSION_COOKIE_DOMAIN', None)  # Add this line
+    SESSION_COOKIE_NAME='erp_session',  # Add this line
+    SESSION_COOKIE_PATH='/',  # Add this line
 )
 
 CONFIG = {
@@ -422,6 +423,9 @@ def generate_invoice_excel():
 
 @app.route('/')
 def index():
+    # If user is already logged in, redirect to dashboard
+    if 'user_id' in session:
+        return redirect(url_for('dashboard_html'))
     return render_template('index.html')
 
 @app.route('/dashboard.html')
@@ -429,6 +433,7 @@ def dashboard_html():
     print("Dashboard access attempt")
     print("Full session data:", dict(session))
     print("User ID in session:", session.get('user_id'))
+    print("Request cookies:", dict(request.cookies))  # Add this line
     
     if 'user_id' not in session:
         print("No user_id in session, redirecting to login")
