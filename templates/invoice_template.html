@@ -73,21 +73,18 @@
             <p><span class="bold">FBR Invoice No:</span> {{ data.fbrInvoiceNumber or "" }}</p>
 
             <!-- QR + Logo side-by-side -->
-            <table style="width: 100%; margin-top: 10px;">
-                <tr>
-                    {% if qr_base64 %}
-                    <td style="text-align: center;">
-                        <img src="data:image/png;base64,{{ qr_base64 }}" style="width: 60px; height: 60px;" alt="QR Code">
-                    </td>
-                    {% endif %}
+            
+             <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+                {% if logo_base64 %}
+                <img src="data:image/png;base64,{{ logo_base64 }}" style="width: 100px; height: 90px;" alt="FBR Logo">
+                {% endif %}
 
-                    {% if logo_base64 %}
-                    <td style="text-align: center;">
-                        <img src="data:image/png;base64,{{ logo_base64 }}" style="width: 60px; height: 30px;" alt="FBR Logo">
-                    </td>
-                    {% endif %}
-                </tr>
-            </table>
+                {% if qr_base64 %}
+                <img src="data:image/png;base64,{{ qr_base64 }}" style="width: 100px; height: 100px;" alt="QR Code">
+                {% endif %}
+
+            </div>
+           
         </td>
     </tr>
 </table>
