@@ -63,7 +63,7 @@
 
     <!-- Login Form -->
     <div class="p-4">
-      <form method="POST" action="/login" class="space-y-6" onsubmit="showSpinner()">
+      <form method="POST" action="/login" class="space-y-6">
         <!-- Username Field (Locked) -->
         <div>
           <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
@@ -139,7 +139,7 @@
     document.getElementById('loginText').textContent = 'Authenticating...';
     document.getElementById('loginSpinner').classList.remove('hidden');
   }
-  
+
   </script>
 </body>
 
