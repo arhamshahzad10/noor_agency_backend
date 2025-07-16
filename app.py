@@ -187,10 +187,10 @@ def get_records():
 
         try:
             items = invoicedata.get("items", [])
-            item = items[0] if items else {}
 
-            value_sales_ex_st = float(item.get("valueSalesExcludingST", 0) or 0)
-            sales_tax_applicable = float(item.get("salesTaxApplicable", 0) or 0)
+            # Sum across all items
+            value_sales_ex_st = sum(float(item.get("valueSalesExcludingST", 0) or 0) for item in items)
+            sales_tax_applicable = sum(float(item.get("salesTaxApplicable", 0) or 0) for item in items)
 
             record = {
                 "sr": idx,
@@ -387,9 +387,9 @@ def submit_fbr():
         status = "Success"
         date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         invoice_date = last_json_data[env].get("invoiceDate", "")
-        item = last_json_data[env]["items"][0]
-        value_sales_ex_st = float(item.get("valueSalesExcludingST", 0))
-        sales_tax_applicable = float(item.get("salesTaxApplicable", 0))
+        items = last_json_data[env]["items"]
+        value_sales_ex_st = sum(float(item.get("valueSalesExcludingST", 0) or 0) for item in items)
+        sales_tax_applicable = sum(float(item.get("salesTaxApplicable", 0) or 0) for item in items)
         total_value = value_sales_ex_st + sales_tax_applicable
 
         # Insert into invoices table in Supabase
