@@ -53,28 +53,42 @@
 
     <h2 class="center">SALES TAX INVOICE</h2>
 
-    <table class="info-table">
-        <tr>
-            <td style="width: 60%;">
-                <p><span class="bold">Seller Name:</span> {{ data.sellerBusinessName }}</p>
-                <p><span class="bold">Seller Address:</span> {{ data.sellerAddress }}</p>
-                <p><span class="bold">City:</span> {{ data.city or "Lahore" }}</p>
-                <p><span class="bold">Province:</span> {{ data.sellerProvince }}</p>
-                <p><span class="bold">sellerNTNCNIC:</span> {{ data.sellerNTNCNIC }}</p>
-            </td>
-            <td style="width: 40%; text-align: right;">
-                <p><span class="bold">invoiceNo:</span> {{ data.invoiceRefNo }}</p>
-                <p><span class="bold">invoiceDate:</span> {{ data.invoiceDate }}</p>
-                <p><span class="bold">FBR Invoice No:</span> {{ data.fbrInvoiceNumber or "" }}</p>
-                {% if logo_base64 %}
-                    <img src="data:image/png;base64,{{ logo_base64 }}" width="100" height="90" alt="FBR Logo" style="margin-top: 10px;"><br>
-                {% endif %}
-                {% if qr_base64 %}
-                    <img src="data:image/png;base64,{{ qr_base64 }}" width="100" height="100" alt="QR Code" style="margin-top: 5px;">
-                {% endif %}
-            </td>
-        </tr>
-    </table>
+<table style="width: 100%; margin-bottom: 20px;">
+    <tr>
+        <!-- LEFT: Seller Info -->
+        <td style="width: 60%; vertical-align: top;">
+            <p><span class="bold">Seller Name:</span> {{ data.sellerBusinessName }}</p>
+            <p><span class="bold">Seller Address:</span> {{ data.sellerAddress }}</p>
+            <p><span class="bold">City:</span> {{ data.city or "Lahore" }}</p>
+            <p><span class="bold">Province:</span> {{ data.sellerProvince }}</p>
+            <p><span class="bold">sellerNTNCNIC:</span> {{ data.sellerNTNCNIC }}</p>
+        </td>
+
+        <!-- RIGHT: Invoice Info + QR/Logo -->
+        <td style="width: 40%; vertical-align: top; text-align: right;">
+            <p><span class="bold">invoiceNo:</span> {{ data.invoiceRefNo }}</p>
+            <p><span class="bold">invoiceDate:</span> {{ data.invoiceDate }}</p>
+            <p><span class="bold">FBR Invoice No:</span> {{ data.fbrInvoiceNumber or "" }}</p>
+
+            <!-- QR + Logo side-by-side -->
+            <table style="width: 100%; margin-top: 10px;">
+                <tr>
+                    {% if qr_base64 %}
+                    <td style="text-align: center;">
+                        <img src="data:image/png;base64,{{ qr_base64 }}" width="90" height="90" alt="QR Code">
+                    </td>
+                    {% endif %}
+
+                    {% if logo_base64 %}
+                    <td style="text-align: center;">
+                        <img src="data:image/png;base64,{{ logo_base64 }}" width="90" height="45" alt="FBR Logo">
+                    </td>
+                    {% endif %}
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
 
 
     <div class="section-title">Buyer Details</div>
