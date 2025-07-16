@@ -164,7 +164,8 @@
                         </a>
                     </nav>
                     <div class="px-2 pb-4">
-                        <a href="/logout" class="sidebar-item flex items-center px-4 py-3 text-sm font-medium rounded-md">
+                        <a href="#" id="logout-btn"
+                            class="sidebar-item flex items-center px-4 py-3 text-sm font-medium rounded-md">
                             <i class="fas fa-sign-out-alt mr-3"></i>
                             Logout
                         </a>
@@ -672,7 +673,16 @@
                     }
                 };
             });
-        } 
+        }
+
+        document.getElementById('logout-btn').addEventListener('click', function (e) {
+            e.preventDefault();
+            localStorage.clear();
+            sessionStorage.clear();
+
+            // Redirect without adding history entry (prevents back)
+            window.location.replace('/');
+        });
 
     </script>
 </body>
