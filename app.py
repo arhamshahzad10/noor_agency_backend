@@ -424,70 +424,70 @@ def submit_fbr():
 # Generate Invoice PDF
 @app.route('/generate-invoice-excel', methods=['GET'])
 def generate_invoice_excel():
-    env = get_env()
-    if env not in last_json_data:
-        return jsonify({'error': 'No JSON data to generate invoice'}), 400
+#     env = get_env()
+#     if env not in last_json_data:
+#         return jsonify({'error': 'No JSON data to generate invoice'}), 400
 
-    data = last_json_data[env]
-    items = data['items']
+#     data = last_json_data[env]
+#     items = data['items']
 
-    # Calculate totals (in case not done earlier)
-    total_excl = 0
-    total_tax = 0
+#     # Calculate totals (in case not done earlier)
+#     total_excl = 0
+#     total_tax = 0
 
-    for item in items:
-        try:
-            excl = float(str(item.get('valueSalesExcludingST', 0)).replace(",", ""))
-        except:
-            excl = 0
-        try:
-            tax = float(str(item.get('salesTaxApplicable', 0)).replace(",", ""))
-        except:
-            tax = 0
+#     for item in items:
+#         try:
+#             excl = float(str(item.get('valueSalesExcludingST', 0)).replace(",", ""))
+#         except:
+#             excl = 0
+#         try:
+#             tax = float(str(item.get('salesTaxApplicable', 0)).replace(",", ""))
+#         except:
+#             tax = 0
 
-        total_excl += excl
-        total_tax += tax
+#         total_excl += excl
+#         total_tax += tax
 
-    # Add totals to data so template can use them
-    data["totalTax"] = total_tax
-    data["totalInclusive"] = total_excl + total_tax
+#     # Add totals to data so template can use them
+#     data["totalTax"] = total_tax
+#     data["totalInclusive"] = total_excl + total_tax
 
-    # Get FBR invoice number
-    fbr_invoice = data.get("fbrInvoiceNumber", "")
+#     # Get FBR invoice number
+#     fbr_invoice = data.get("fbrInvoiceNumber", "")
 
-    # --- Generate QR Code as base64 ---
-    qr_base64 = ""
-    if fbr_invoice:
-        qr = qrcode.make(fbr_invoice)
-        with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
-            qr_path = tmp.name
-            qr.save(qr_path)
+#     # --- Generate QR Code as base64 ---
+#     qr_base64 = ""
+#     if fbr_invoice:
+#         qr = qrcode.make(fbr_invoice)
+#         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+#             qr_path = tmp.name
+#             qr.save(qr_path)
 
-        with open(qr_path, "rb") as qr_file:
-            qr_base64 = base64.b64encode(qr_file.read()).decode("utf-8")
+#         with open(qr_path, "rb") as qr_file:
+#             qr_base64 = base64.b64encode(qr_file.read()).decode("utf-8")
 
-        os.remove(qr_path)
+#         os.remove(qr_path)
 
-    # --- Load FBR logo as base64 ---
-    logo_path = "fbr_logo.png"
-    logo_base64 = ""
-    if os.path.exists(logo_path):
-        with open(logo_path, "rb") as logo_file:
-            logo_base64 = base64.b64encode(logo_file.read()).decode("utf-8")
+#     # --- Load FBR logo as base64 ---
+#     logo_path = "fbr_logo.png"
+#     logo_base64 = ""
+#     if os.path.exists(logo_path):
+#         with open(logo_path, "rb") as logo_file:
+#             logo_base64 = base64.b64encode(logo_file.read()).decode("utf-8")
 
-    # --- Render HTML invoice ---
-    rendered_html = render_template(
-        'invoice_template.html',
-        data=data,
-        qr_base64=qr_base64,
-        logo_base64=logo_base64
-    )
+#     # --- Render HTML invoice ---
+#     rendered_html = render_template(
+#         'invoice_template.html',
+#         data=data,
+#         qr_base64=qr_base64,
+#         logo_base64=logo_base64
+#     )
 
-    # --- Generate PDF ---
-    pdf_file_path = 'invoice.pdf'
-    HTML(string=rendered_html).write_pdf(pdf_file_path)
+#     # --- Generate PDF ---
+#     pdf_file_path = 'invoice.pdf'
+#     HTML(string=rendered_html).write_pdf(pdf_file_path)
 
-    return send_file(pdf_file_path, as_attachment=True)
+#     return send_file(pdf_file_path, as_attachment=True)
 
 
 
