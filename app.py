@@ -548,7 +548,6 @@ def generate_invoice_excel():
         if row:
             client_logo_url = row[0]
             
-    fbr_logo_url = "https://atgmgyuzkoqklxnqgobq.supabase.co/storage/v1/object/public/client-logos/fbr_logo.png"
 
 
 
@@ -559,9 +558,7 @@ def generate_invoice_excel():
     'invoice_template.html',
     data=data,
     qr_base64=qr_base64,
-    logo_base64=None,
-    client_logo_url=client_logo_url,
-    fbr_logo_url=fbr_logo_url
+    client_logo_url=client_logo_url
 )
 
     # --- Generate PDF ---
