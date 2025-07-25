@@ -8,140 +8,113 @@
             margin: 20px;
         }
 
-        .header-table,
-        .info-table,
-        .item-table,
-        .footer-table {
+        .bold { font-weight: bold; }
+        .right { text-align: right; }
+        .center { text-align: center; }
+
+        .table, .item-table {
             width: 100%;
             border-collapse: collapse;
         }
 
-        .item-table th,
-        .item-table td {
-            border: 1px solid #333;
-            padding: 5px;
+        .item-table th, .item-table td,
+        .summary-table td {
+            border: 1px solid #000;
+            padding: 6px;
             text-align: center;
         }
 
-        .section-title {
-            font-weight: bold;
-            margin-top: 20px;
-            margin-bottom: 10px;
-            font-size: 14px;
+        .summary-table {
+            margin-top: 10px;
         }
 
-        .bold {
-            font-weight: bold;
-        }
-
-        .right {
-            text-align: right;
-        }
-
-        .center {
-            text-align: center;
-        }
-
-        .footer-cell {
-            border: 1px solid #333;
-            padding: 10px;
-            text-align: right;
+        .footer-note {
+            margin-top: 10px;
+            font-style: italic;
         }
     </style>
 </head>
 <body>
 
-    <div style="border: 2px solid black; padding: 5px; text-align: center; font-size: 16px; font-weight: bold; margin-bottom: 10px;">
-    SALES TAX INVOICE
-    </div>
-
-<table style="width: 100%; margin-bottom: 20px;">
+<!-- Header: LOGO + SELLER INFO -->
+<table class="table">
     <tr>
-        <!-- LEFT: Seller Info -->
-        <td style="width: 60%; vertical-align: top; border: 1px solid black; padding: 10px;">
-            <p><span class="bold">Seller Name:</span> {{ data.sellerBusinessName }}</p>
-            <p><span class="bold">Seller Address:</span> {{ data.sellerAddress }}</p>
-            <p><span class="bold">City:</span> {{ data.city or "Lahore" }}</p>
-            <p><span class="bold">Province:</span> {{ data.sellerProvince }}</p>
-            <p><span class="bold">sellerNTNCNIC:</span> {{ data.sellerNTNCNIC }}</p>
+        <!-- Logo -->
+        <td style="width: 50%; vertical-align: top;">
+            {% if client_logo_url %}
+                <img src="{{ client_logo_url }}" style="width: 150px; height: auto;" alt="Client Logo">
+            {% endif %}
         </td>
-
-        <!-- RIGHT: Invoice Info + QR/Logo -->
-        <td style="width: 40%; vertical-align: top; text-align: right;">
-            <p><span class="bold">invoiceNo:</span> {{ data.invoiceRefNo }}</p>
-            <p><span class="bold">invoiceDate:</span> {{ data.invoiceDate }}</p>
-            <p><span class="bold">FBR Invoice No:</span> {{ data.fbrInvoiceNumber or "" }}</p>
-
-            <!-- QR + Logo side-by-side -->
-            
-             <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
-                {% if logo_base64 %}
-                <img src="data:image/png;base64,{{ logo_base64 }}" style="width: 100px; height: 90px;" alt="FBR Logo">
-                {% endif %}
-
-                {% if qr_base64 %}
-                <img src="data:image/png;base64,{{ qr_base64 }}" style="width: 100px; height: 100px;" alt="QR Code">
-                {% endif %}
-
-            </div>
-           
+        <!-- Seller Info -->
+        <td style="width: 50%; vertical-align: top;">
+            <p><span class="bold">Seller Name:</span> {{ data.sellerBusinessName }}</p>
+            <p><span class="bold">Address:</span> {{ data.sellerAddress }}</p>
+            <p><span class="bold">NTN#:</span> {{ data.sellerNTNCNIC }}</p>
+            <p><span class="bold">STRN#:</span> {{ data.scenarioId or "N/A" }}</p>
         </td>
     </tr>
 </table>
 
+<!-- Buyer Info -->
+<hr>
+<p><span class="bold">Buyer Name:</span> {{ data.buyerBusinessName }}</p>
+<p><span class="bold">Address:</span> {{ data.buyerAddress }}</p>
+<p><span class="bold">NTN#:</span> {{ data.buyerNTNCNIC }}</p>
+<p><span class="bold">STRN#:</span> {{ data.buyerSTRN or "N/A" }}</p>
+<p><span class="bold">CNIC#:</span> {{ data.buyerCNIC or "N/A" }}</p>
 
-    <div class="section-title">Buyer Details</div>
-    <table class="info-table">
+<!-- Invoice Meta -->
+<hr>
+<p><span class="bold">DATE:</span> {{ data.invoiceDate }} &nbsp;&nbsp;&nbsp;
+   <span class="bold">INVOICE#:</span> {{ data.invoiceRefNo }}</p>
+
+<!-- Product Table -->
+<h3 style="text-align:center;">Invoice Items</h3>
+<table class="item-table">
+    <thead>
         <tr>
-            <td>
-                <p><span class="bold">Buyer Name:</span> {{ data.buyerBusinessName }}</p>
-                <p><span class="bold">Buyer Address:</span> {{ data.buyerAddress }}</p>
-                <p><span class="bold">Province:</span> {{ data.buyerProvince }}</p>
-                <p><span class="bold">NTN/CNIC:</span> {{ data.buyerNTNCNIC }}</p>
-            </td>
+            <th>SR NO</th>
+            <th>HS CODE</th>
+            <th>Product Detail</th>
+            <th>Quantity</th>
+            <th>Rate</th>
+            <th>Amount (Excl. ST)</th>
         </tr>
-    </table>
-
-    <div class="section-title">Items</div>
-    <table class="item-table">
-        <thead>
-            <tr>
-                <th>Sr. No.</th>
-                <th>Quantity</th>
-                <th>Description</th>
-                <th>HS Code</th>
-                <th>Rate</th>
-                <th>Value Excl ST</th>
-                <th>Sales Tax</th>
-                <th>Total</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in data["items"] %}
-            <tr>
-                <td>{{ loop.index }}</td>
-                <td>{{ item.quantity }}</td>
-                <td>{{ item.productDescription }}</td>
-                <td>{{ item.hsCode }}</td>
-                <td>{{ item.rate }}</td>
-                <td>{{ item.valueSalesExcludingST }}</td>
-                <td>{{ item.salesTaxApplicable }}</td>
-                <td>{{ item.valueSalesExcludingST + item.salesTaxApplicable }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <br><br>
-
-    <table class="footer-table">
+    </thead>
+    <tbody>
+        {% for item in data["items"] %}
         <tr>
-            <td class="footer-cell"><strong>Sales Tax:</strong> {{ data.totalTax }}</td>
-            <td class="footer-cell"><strong>Inclusive Value:</strong> {{ data.totalInclusive }}</td>
+            <td>{{ loop.index }}</td>
+            <td>{{ item.hsCode }}</td>
+            <td>{{ item.productDescription }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.rate }}</td>
+            <td>{{ item.valueSalesExcludingST }}</td>
         </tr>
-    </table>
+        {% endfor %}
+    </tbody>
+</table>
 
-    <br><br>
-    <p class="right bold">{{ session['name'] }}</p>
+<!-- Totals -->
+<table class="summary-table">
+    <tr>
+        <td><strong>S.T Rate</strong></td>
+        <td><strong>Sales Tax</strong></td>
+        <td><strong>Gross Total</strong></td>
+    </tr>
+    <tr>
+        <td>N/A</td>
+        <td>{{ data.totalTax }}</td>
+        <td>{{ data.totalInclusive }}</td>
+    </tr>
+</table>
+
+<!-- Amount in Words -->
+<p class="footer-note"><strong>Amount in Words:</strong> {{ data.amountInWords or "To be added..." }}</p>
+
+<!-- Signature -->
+<br><br>
+<p class="right bold">{{ session['name'] }}</p>
+
 </body>
 </html>
