@@ -527,11 +527,11 @@ def generate_invoice_excel():
         os.remove(qr_path)
 
     # --- Load FBR logo as base64 ---
-    logo_path = "fbr_logo.png"
-    logo_base64 = ""
-    if os.path.exists(logo_path):
-        with open(logo_path, "rb") as logo_file:
-            logo_base64 = base64.b64encode(logo_file.read()).decode("utf-8")
+    # logo_path = "fbr_logo.png"
+    # logo_base64 = ""
+    # if os.path.exists(logo_path):
+    #     with open(logo_path, "rb") as logo_file:
+    #         logo_base64 = base64.b64encode(logo_file.read()).decode("utf-8")
             
             
 
@@ -547,6 +547,9 @@ def generate_invoice_excel():
         conn.close()
         if row:
             client_logo_url = row[0]
+            
+    fbr_logo_url = "https://atgmgyuzkoqklxnqgobq.supabase.co/storage/v1/object/public/client-logos/fbr_logo.png"
+
 
 
 
@@ -556,8 +559,9 @@ def generate_invoice_excel():
     'invoice_template.html',
     data=data,
     qr_base64=qr_base64,
-    logo_base64=logo_base64,
-    client_logo_url=client_logo_url
+    logo_base64=None,
+    client_logo_url=client_logo_url,
+    fbr_logo_url=fbr_logo_url
 )
 
     # --- Generate PDF ---
