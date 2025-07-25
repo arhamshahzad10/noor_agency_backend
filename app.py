@@ -420,17 +420,6 @@ def submit_fbr():
         return jsonify({"error": str(e)}), 500
 
 
-# Fetch client logo URL
-client_id = session.get('client_id')
-conn = get_db_connection()
-cur = conn.cursor()
-cur.execute("SELECT logo_url FROM clients WHERE id = %s", (client_id,))
-logo_row = cur.fetchone()
-cur.close()
-conn.close()
-
-client_logo_url = logo_row[0] if logo_row else None
-
 
 # Generate Invoice PDF
 @app.route('/generate-invoice-excel', methods=['GET'])
@@ -491,8 +480,7 @@ def generate_invoice_excel():
         'invoice_template.html',
         data=data,
         qr_base64=qr_base64,
-        logo_base64=logo_base64,
-        client_logo_url=client_logo_url
+        logo_base64=logo_base64
     )
 
     # --- Generate PDF ---
