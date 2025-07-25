@@ -4,44 +4,38 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            font-size: 12px;
+            font-size: 13px;
             margin: 20px;
         }
-
-        .header-table,
-        .info-table,
-        .item-table,
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+        th, td {
+            border: 1px solid #333;
+            padding: 6px;
+            text-align: center;
+        }
+        .no-border td {
+            border: none;
+            padding: 4px 6px;
+        }
+        .section-title {
+            font-weight: bold;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .bold {
+            font-weight: bold;
+        }
+        .right {
+            text-align: right;
+        }
         .footer-table {
             width: 100%;
             border-collapse: collapse;
         }
-
-        .item-table th,
-        .item-table td {
-            border: 1px solid #333;
-            padding: 5px;
-            text-align: center;
-        }
-
-        .section-title {
-            font-weight: bold;
-            margin-top: 20px;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-
-        .bold {
-            font-weight: bold;
-        }
-
-        .right {
-            text-align: right;
-        }
-
-        .center {
-            text-align: center;
-        }
-
         .footer-cell {
             border: 1px solid #333;
             padding: 10px;
@@ -51,84 +45,85 @@
 </head>
 <body>
 
-    <div style="border: 2px solid black; padding: 5px; text-align: center; font-size: 16px; font-weight: bold; margin-bottom: 10px;">
-    SALES TAX INVOICE
-    </div>
-
-{% if client_logo_url %}
-  <img src="{{ client_logo_url }}" alt="Client Logo" style="width: 150px; height: auto; margin-bottom: 10px;">
-{% endif %}
-
-<table style="width: 100%; margin-bottom: 20px;">
-    <tr>
-        <!-- LEFT: Seller Info -->
-        <td style="width: 60%; vertical-align: top; border: 1px solid black; padding: 10px;">
-            <p><span class="bold">Seller Name:</span> {{ data.sellerBusinessName }}</p>
-            <p><span class="bold">Seller Address:</span> {{ data.sellerAddress }}</p>
-            <p><span class="bold">City:</span> {{ data.city or "Lahore" }}</p>
-            <p><span class="bold">Province:</span> {{ data.sellerProvince }}</p>
-            <p><span class="bold">sellerNTNCNIC:</span> {{ data.sellerNTNCNIC }}</p>
-        </td>
-
-        <!-- RIGHT: Invoice Info + QR/Logo -->
-        <td style="width: 40%; vertical-align: top; text-align: right;">
-            <p><span class="bold">invoiceNo:</span> {{ data.invoiceRefNo }}</p>
-            <p><span class="bold">invoiceDate:</span> {{ data.invoiceDate }}</p>
-            <p><span class="bold">FBR Invoice No:</span> {{ data.fbrInvoiceNumber or "" }}</p>
-
-            <!-- QR + Logo side-by-side -->
-            
-             <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
-                {% if logo_base64 %}
-                <img src="data:image/png;base64,{{ logo_base64 }}" style="width: 100px; height: 90px;" alt="FBR Logo">
-                {% endif %}
-
-                {% if qr_base64 %}
-                <img src="data:image/png;base64,{{ qr_base64 }}" style="width: 100px; height: 100px;" alt="QR Code">
-                {% endif %}
-
-            </div>
-           
-        </td>
-    </tr>
-</table>
-
-
-    <div class="section-title">Buyer Details</div>
-    <table class="info-table">
+    <table class="no-border">
         <tr>
-            <td>
-                <p><span class="bold">Buyer Name:</span> {{ data.buyerBusinessName }}</p>
-                <p><span class="bold">Buyer Address:</span> {{ data.buyerAddress }}</p>
-                <p><span class="bold">Province:</span> {{ data.buyerProvince }}</p>
-                <p><span class="bold">NTN/CNIC:</span> {{ data.buyerNTNCNIC }}</p>
+            <td style="width: 50%; vertical-align: top; text-align: left;">
+                {% if client_logo_url %}
+                    <img src="{{ client_logo_url }}" alt="Client Logo" style="width: 150px; height: auto;">
+                {% endif %}
+            </td>
+            <td style="width: 50%; text-align: right; text-align: left;">
+                <p><strong>Seller:</strong> {{ data.sellerBusinessName }}</p>
+                <p><strong>Address:</strong> {{ data.sellerAddress }}</p>
+                <p><strong>NTN:</strong> {{ data.sellerNTNCNIC }}</p>
+                <p><strong>STRN:</strong> {{ data.sellerSTRN }}</p>
             </td>
         </tr>
     </table>
 
-    <div class="section-title">Items</div>
-    <table class="item-table">
+<br><br>
+    <table class="no-border" style="width: 100%; margin-bottom: 10px;">
+        <tr>
+            <!-- LEFT: Buyer Info -->
+            <td style="width: 60%; vertical-align: top; border: none; text-align: left;">
+                <p><strong>Buyer:</strong> {{ data.buyerBusinessName }}</p>
+                <p><strong>Address:</strong> {{ data.buyerAddress }}</p>
+                <p><strong>NTN:</strong> {{ data.buyerNTNCNIC }}</p>
+                <p><strong>STRN:</strong> {{ data.buyerSTRN }}</p>
+                <p><strong>CNIC:</strong> {{ data.buyerCNIC }}</p>
+            </td>
+
+            <!-- RIGHT: QR + FBR Logo -->
+            <td style="width: 40%; vertical-align: top; text-align: right; border: none;">
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    {% if logo_base64 %}
+                        <img src="data:image/png;base64,{{ logo_base64 }}" style="width: 90px; height: auto;" alt="FBR Logo">
+                    {% endif %}
+                    {% if qr_base64 %}
+                        <img src="data:image/png;base64,{{ qr_base64 }}" style="width: 100px; height: 100px;" alt="QR Code">
+                    {% endif %}
+                </div>
+            </td>
+        </tr>
+    </table>
+
+
+
+    <table class="no-border">
+        <tr>
+            <td><strong>Date:</strong> {{ data.invoiceDate }}</td>
+            <td class="right"><strong>Invoice No:</strong> {{ data.invoiceRefNo }}</td>
+            <td class="right"><strong>FBR Invoice No:</strong> {{ data.fbrInvoiceNumber or "" }}</td>
+        </tr>
+    </table>
+
+
+
+    <div class="section-title">Invoice Details</div>
+    <table>
         <thead>
             <tr>
                 <th>Sr. No.</th>
-                <th>Quantity</th>
-                <th>Description</th>
-                <th>HS Code</th>
+                <th>HS CODE</th>
+                <th>Product Detail</th>
+                <th>Quantity (MT)</th>
                 <th>Rate</th>
-                <th>Value Excl ST</th>
+                <th>Amount Excl. ST</th>
+                <th>ST Rate</th>
                 <th>Sales Tax</th>
-                <th>Total</th>
+                <th>Gross Total</th>
             </tr>
         </thead>
         <tbody>
             {% for item in data["items"] %}
             <tr>
                 <td>{{ loop.index }}</td>
-                <td>{{ item.quantity }}</td>
-                <td>{{ item.productDescription }}</td>
                 <td>{{ item.hsCode }}</td>
-                <td>{{ item.rate }}</td>
+                <td>{{ item.productDescription }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.unitrate }}</td>
                 <td>{{ item.valueSalesExcludingST }}</td>
+                <td>{{ item.rate }}</td>
                 <td>{{ item.salesTaxApplicable }}</td>
                 <td>{{ item.valueSalesExcludingST + item.salesTaxApplicable }}</td>
             </tr>
@@ -145,7 +140,8 @@
         </tr>
     </table>
 
-    <br><br>
-    <p class="right bold">{{ session['name'] }}</p>
+    <p><strong>Amount in Words:</strong> {{ data.amountInWords }}</p>
+
+
 </body>
 </html>

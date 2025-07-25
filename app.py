@@ -276,7 +276,7 @@ def get_json():
     items = []
     for _, row in product_df.iterrows():
         try:
-            rate_raw = safe(row.get("rate", ""), "")
+            rate_raw = safe(row.get("STrate", ""), "")
             rate = str(rate_raw).strip() if isinstance(rate_raw, str) else f"{int(float(rate_raw) * 100)}%"
 
             hs_code_raw = safe(row.get("hsCode", ""))
@@ -291,7 +291,7 @@ def get_json():
                 ("productDescription", safe(row.get("productDescription"))),
                 ("rate", rate),
                 ("uoM", safe(row.get("uoM"))),
-                ("quantity", int(safe(row.get("quantity"), 0))),
+                ("quantity", float(safe(row.get("quantity"), 0))),
                 ("totalValues", float(safe(row.get("totalValues"), 0))),
                 ("valueSalesExcludingST", float(safe(row.get("valueSalesExcludingST"), 0))),
                 ("fixedNotifiedValueOrRetailPrice", float(safe(row.get("fixedNotifiedValueOrRetailPrice"), 0))),
@@ -430,6 +430,47 @@ def generate_invoice_excel():
 
     data = last_json_data[env]
     items = data['items']
+    
+    
+    
+    
+    
+    # Read from Excel file again to get display-only values
+    filepath = last_uploaded_file.get(env)
+    if filepath and os.path.exists(filepath):
+        df = pd.read_excel(filepath, header=None)
+
+        # --- Extract section data like sellerSTRN and buyerSTRN ---
+        section_data = {}
+        product_start_index = None
+
+        for i, row in df.iterrows():
+            key = str(row[0]).strip() if pd.notna(row[0]) else ''
+            val = row[1] if len(row) > 1 else None
+
+            if key.lower() == "hscode":
+                product_start_index = i
+                break
+
+            if key and not any(key.startswith(s) for s in ["1)", "2)", "3)", "4)"]):
+                section_data[key] = val
+
+        # Add STRNs to `data` for invoice rendering
+        data["sellerSTRN"] = section_data.get("sellerSTRN", "")
+        data["buyerSTRN"] = section_data.get("buyerSTRN", "")
+
+        # --- Extract simple rate per item for HTML invoice ---
+        product_df = pd.read_excel(filepath, skiprows=product_start_index)
+        for i, item in enumerate(items):
+            try:
+                item["unitrate"] = float(product_df.iloc[i].get("rate", 0))  # simple unit rate
+            except:
+                item["unitrate"] = 0
+
+
+
+
+
 
     # Calculate totals (in case not done earlier)
     total_excl = 0
@@ -452,6 +493,23 @@ def generate_invoice_excel():
     data["totalTax"] = total_tax
     data["totalInclusive"] = total_excl + total_tax
 
+    from num2words import num2words
+
+    # Round to 2 decimals if needed
+    total = round(data['totalInclusive'], 2)
+
+    # Convert to words with PKR style
+    amount_in_words = num2words(total, to='currency', lang='en', currency='USD')
+    amount_in_words = amount_in_words.replace("dollars", "rupees").replace("cents", "paisa")
+
+    # Optional: Add "only" at the end
+    amount_in_words += " only"
+
+    # Add to template context
+    data['amountInWords'] = amount_in_words
+
+
+    
     # Get FBR invoice number
     fbr_invoice = data.get("fbrInvoiceNumber", "")
 
