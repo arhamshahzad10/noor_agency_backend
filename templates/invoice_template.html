@@ -55,6 +55,10 @@
     SALES TAX INVOICE
     </div>
 
+{% if client_logo_url %}
+  <img src="{{ client_logo_url }}" alt="Client Logo" style="width: 150px; height: auto; margin-bottom: 10px;">
+{% endif %}
+
 <table style="width: 100%; margin-bottom: 20px;">
     <tr>
         <!-- LEFT: Seller Info -->

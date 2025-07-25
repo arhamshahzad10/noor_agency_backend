@@ -474,14 +474,33 @@ def generate_invoice_excel():
     if os.path.exists(logo_path):
         with open(logo_path, "rb") as logo_file:
             logo_base64 = base64.b64encode(logo_file.read()).decode("utf-8")
+            
+            
+
+    # Fetch client logo from Supabase
+    client_id = session.get('client_id')
+    client_logo_url = None
+    if client_id:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT logo_url FROM clients WHERE id = %s", (client_id,))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+        if row:
+            client_logo_url = row[0]
+
+
+
 
     # --- Render HTML invoice ---
     rendered_html = render_template(
-        'invoice_template.html',
-        data=data,
-        qr_base64=qr_base64,
-        logo_base64=logo_base64
-    )
+    'invoice_template.html',
+    data=data,
+    qr_base64=qr_base64,
+    logo_base64=logo_base64,
+    client_logo_url=client_logo_url
+)
 
     # --- Generate PDF ---
     pdf_file_path = 'invoice.pdf'
