@@ -45,6 +45,9 @@
 </head>
 <body>
 
+     {% if logo_base64 %}
+            <img src="data:image/png;base64,{{ logo_base64 }}" style="width: 90px; height: auto;" alt="FBR Logo">
+    {% endif %}
     <table class="no-border">
         <tr>
             <td style="width: 50%; vertical-align: top; text-align: left;">
@@ -77,9 +80,7 @@
             <td style="width: 40%; vertical-align: top; text-align: right; border: none;">
                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
                     
-                    {% if logo_base64 %}
-                        <img src="data:image/png;base64,{{ logo_base64 }}" style="width: 90px; height: auto;" alt="FBR Logo">
-                    {% endif %}
+                   
 
                     {% if qr_base64 %}
                         <img src="data:image/png;base64,{{ qr_base64 }}" style="width: 100px; height: 100px;" alt="QR Code">
