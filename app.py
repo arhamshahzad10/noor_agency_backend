@@ -541,8 +541,7 @@ def generate_invoice_excel():
            
            
     
-    fbr_logo_url = os.getenv("FBR") 
-
+ 
     # Fetch client logo from Supabase
     client_id = session.get('client_id')
     client_logo_url = None
@@ -556,18 +555,29 @@ def generate_invoice_excel():
         if row:
             client_logo_url = row[0]
             
+    
+    # Fetch FBR logo URL from DB
+    fbr_logo_url = None
 
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT fbr_logo FROM fbr LIMIT 1;")
+    row = cur.fetchone()
+    cur.close()
+    conn.close()
 
+    if row:
+        fbr_logo_url = row[0]
 
-
+            
 
     # --- Render HTML invoice ---
     rendered_html = render_template(
     'invoice_template.html',
     data=data,
     qr_base64=qr_base64,
-    fbr_logo_url=fbr_logo_url,
-    client_logo_url=client_logo_url
+    client_logo_url=client_logo_url,
+    fbr_logo_url=fbr_logo_url
 )
 
     # --- Generate PDF ---
