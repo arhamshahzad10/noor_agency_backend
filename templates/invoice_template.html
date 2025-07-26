@@ -77,8 +77,10 @@
             <td style="width: 40%; vertical-align: top; text-align: right; border: none;">
                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
                     
-                    <img src="https://atgmgyuzkoqklxnqgobq.supabase.co/storage/v1/object/public/client-logos/fbr_logo.png" style="width: 90px; height: auto;" alt="FBR Logo">
-               
+                    <img src="https://atgmgyuzkoqklxnqgobq.supabase.co/storage/v1/object/public/client-logos/fbr_logo.png" 
+                    alt="FBR Logo" 
+                    style="max-width: 90px; height: auto; border: 1px solid red;">
+                    
                     {% if qr_base64 %}
                         <img src="data:image/png;base64,{{ qr_base64 }}" style="width: 100px; height: 100px;" alt="QR Code">
                     {% endif %}
