@@ -525,34 +525,33 @@ def generate_invoice_excel():
             qr_base64 = base64.b64encode(qr_file.read()).decode("utf-8")
 
         os.remove(qr_path)
+        
+        
 
     # --- Load FBR logo as base64 ---
-    logo_url = "https://atgmgyuzkoqklxnqgobq.supabase.co/storage/v1/object/public/client-logos/fbr_logo.png"
+    logo_path = os.path.join(app.root_path, 'static', 'images', 'fbr_logo.png')
     logo_base64 = ""
 
-    try:
-        response = requests.get(logo_url)
-        if response.status_code == 200:
-            logo_base64 = base64.b64encode(response.content).decode("utf-8")
-        else:
-            print(f"Failed to load logo from URL. Status code: {response.status_code}")
-    except Exception as e:
-        print(f"Error fetching logo: {e}")
+    if os.path.exists(logo_path):
+        with open(logo_path, "rb") as logo_file:
+            logo_base64 = base64.b64encode(logo_file.read()).decode("utf-8")
+    else:
+        print("⚠️ FBR logo not found at", logo_path)
             
             
 
     # Fetch client logo from Supabase
-    # client_id = session.get('client_id')
-    # client_logo_url = None
-    # if client_id:
-    #     conn = get_db_connection()
-    #     cur = conn.cursor()
-    #     cur.execute("SELECT logo_url FROM clients WHERE id = %s", (client_id,))
-    #     row = cur.fetchone()
-    #     cur.close()
-    #     conn.close()
-    #     if row:
-    #         client_logo_url = row[0]
+    client_id = session.get('client_id')
+    client_logo_url = None
+    if client_id:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT logo_url FROM clients WHERE id = %s", (client_id,))
+        row = cur.fetchone()
+        cur.close()
+        conn.close()
+        if row:
+            client_logo_url = row[0]
             
 
 
@@ -564,7 +563,8 @@ def generate_invoice_excel():
     'invoice_template.html',
     data=data,
     qr_base64=qr_base64,
-    logo_base64=logo_base64
+    logo_base64=logo_base64,
+    client_logo_url=client_logo_url
 )
 
     # --- Generate PDF ---
