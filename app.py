@@ -490,8 +490,9 @@ def generate_invoice_excel():
         total_tax += tax
 
     # Add totals to data so template can use them
-    data["totalTax"] = total_tax
-    data["totalInclusive"] = total_excl + total_tax
+    data["totalExcl"] = round(total_excl, 2)
+    data["totalTax"] = round(total_tax, 2)
+    data["totalInclusive"] = round(total_excl + total_tax, 2)
 
     from num2words import num2words
 
@@ -525,22 +526,7 @@ def generate_invoice_excel():
             qr_base64 = base64.b64encode(qr_file.read()).decode("utf-8")
 
         os.remove(qr_path)
-        
-        
-
-    # --- Load FBR logo as base64 ---
-    # logo_path = os.path.join(app.root_path, 'static', 'images', 'fbr_logo.png')
-    # logo_base64 = ""
-
-    # if os.path.exists(logo_path):
-    #     with open(logo_path, "rb") as logo_file:
-    #         logo_base64 = base64.b64encode(logo_file.read()).decode("utf-8")
-    # else:
-    #     print("⚠️ FBR logo not found at", logo_path)
-            
-           
-           
-    
+         
  
     # Fetch client logo from Supabase
     client_id = session.get('client_id')
