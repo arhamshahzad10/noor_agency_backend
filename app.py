@@ -76,7 +76,7 @@ def get_db_connection():
         database=os.getenv("DB_NAME"),
         user=os.getenv("DB_USER"),
         password=os.getenv("DB_PASSWORD"),
-        port=os.getenv("DB_PORT")
+        port=os.getenv("DB_PORT"),
     )
 
 def get_env():
@@ -529,16 +529,19 @@ def generate_invoice_excel():
         
 
     # --- Load FBR logo as base64 ---
-    logo_path = os.path.join(app.root_path, 'static', 'images', 'fbr_logo.png')
-    logo_base64 = ""
+    # logo_path = os.path.join(app.root_path, 'static', 'images', 'fbr_logo.png')
+    # logo_base64 = ""
 
-    if os.path.exists(logo_path):
-        with open(logo_path, "rb") as logo_file:
-            logo_base64 = base64.b64encode(logo_file.read()).decode("utf-8")
-    else:
-        print("⚠️ FBR logo not found at", logo_path)
+    # if os.path.exists(logo_path):
+    #     with open(logo_path, "rb") as logo_file:
+    #         logo_base64 = base64.b64encode(logo_file.read()).decode("utf-8")
+    # else:
+    #     print("⚠️ FBR logo not found at", logo_path)
             
-            
+           
+           
+    
+    fbr_logo_url = os.getenv("FBR") 
 
     # Fetch client logo from Supabase
     client_id = session.get('client_id')
@@ -563,7 +566,7 @@ def generate_invoice_excel():
     'invoice_template.html',
     data=data,
     qr_base64=qr_base64,
-    logo_base64=logo_base64,
+    fbr_logo_url=fbr_logo_url,
     client_logo_url=client_logo_url
 )
 
