@@ -74,7 +74,7 @@
         <td style="width: 50%; vertical-align: middle; text-align: left;">
             <div style="line-height: 1.6;">
                 <p style="margin: 0;"><strong>{{ data.sellerAddress }}</strong></p>
-                <p style="margin: 0;"><strong>NTN:</strong> {{ data.sellerNTNCNIC }}</p>
+                <p style="margin: 0;"><strong>NTN:</strong><span style="margin-left: 12px;">{{ data.sellerNTNCNIC }}</span></p>
                 <p style="margin: 0;"><strong>STRN:</strong> {{ data.sellerSTRN }}</p>
             </div>
         </td>
@@ -143,11 +143,11 @@
             <td class="left">{{ item.productDescription }}</td>
             <td>{{ item.hsCode }}</td>
             <td>{{ item.quantity }}</td>
-            <td>{{ item.unitrate }}</td>
-            <td>{{ item.valueSalesExcludingST }}</td>
+            <td>{{ item.unitrate | comma_format }}</td>
+            <td>{{ item.valueSalesExcludingST | comma_format }}</td>
             <td>{{ item.rate }}</td>
-            <td>{{ item.salesTaxApplicable }}</td>
-            <td>{{ item.valueSalesExcludingST + item.salesTaxApplicable }}</td>
+            <td>{{ item.salesTaxApplicable | comma_format }}</td>
+            <td>{{ (item.valueSalesExcludingST + item.salesTaxApplicable) | comma_format }}</td>
         </tr>
         {% endfor %}
 
@@ -193,15 +193,15 @@
                 <table style="width: 100%;">
                     <tr>
                         <td style="text-align: left; font-weight: bold; border: 1px solid #333;">Value Exclusive of ST</td>
-                        <td style="text-align: right; border: 1px solid #333;">{{ data.totalExcl }}</td>
+                        <td style="text-align: right; border: 1px solid #333;">{{ data.totalExcl | comma_format}}</td>
                     </tr>
                     <tr>
                         <td style="text-align: left; font-weight: bold; border: 1px solid #333;">Value of Sales Tax</td>
-                        <td style="text-align: right; border: 1px solid #333;">{{ data.totalTax }}</td>
+                        <td style="text-align: right; border: 1px solid #333;">{{ data.totalTax | comma_format }}</td>
                     </tr>
                     <tr>
                         <td style="text-align: left; font-weight: bold; border: 1px solid #333;">Value Inclusive of ST</td>
-                        <td style="text-align: right; border: 1px solid #333;">{{ data.totalInclusive }}</td>
+                        <td style="text-align: right; border: 1px solid #333;">{{ data.totalInclusive | comma_format }}</td>
                     </tr>
                 </table>
             </div>

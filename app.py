@@ -37,6 +37,15 @@ app.config.update(
 )
 
 
+@app.template_filter('comma_format')
+def comma_format(value):
+    try:
+        return "{:,.2f}".format(float(value))
+    except (ValueError, TypeError):
+        return value
+    
+    
+
 def get_client_config(client_id, env):
     conn = get_db_connection()
     cur = conn.cursor()
