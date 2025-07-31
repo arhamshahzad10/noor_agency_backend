@@ -16,6 +16,7 @@ import psycopg2
 from flask_cors import CORS
 from dotenv import load_dotenv
 load_dotenv()
+import datetime
 
 
 app = Flask(__name__)
@@ -36,6 +37,20 @@ app.config.update(
     SESSION_COOKIE_PATH='/'
 )
 
+@app.template_filter('datetimeformat')
+def datetimeformat(value):
+    try:
+        return datetime.datetime.strptime(value, "%Y-%m-%d").strftime("%d %B %Y")
+    except:
+        return value
+
+# @app.template_filter('datetimeformat')
+# def datetimeformat(value):
+#     try:
+#         return datetime.datetime.strptime(value, "%Y-%m-%d").strftime("%d-%m-%Y")
+#     except:
+#         return value
+
 
 @app.template_filter('comma_format')
 def comma_format(value):
@@ -43,7 +58,6 @@ def comma_format(value):
         return "{:,.2f}".format(float(value))
     except (ValueError, TypeError):
         return value
-    
     
 
 def get_client_config(client_id, env):
