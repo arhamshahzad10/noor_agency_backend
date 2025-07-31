@@ -431,16 +431,14 @@ def generate_invoice_excel():
     data = last_json_data[env]
     items = data['items']
     
-    
-    
-    
-    
-    # Read from Excel file again to get display-only values
+
+
+# Read from Excel file again to get display-only values
     filepath = last_uploaded_file.get(env)
     if filepath and os.path.exists(filepath):
         df = pd.read_excel(filepath, header=None)
 
-        # --- Extract section data like sellerSTRN and buyerSTRN ---
+        # --- Extract section data (header fields above the product list) ---
         section_data = {}
         product_start_index = None
 
@@ -448,22 +446,28 @@ def generate_invoice_excel():
             key = str(row[0]).strip() if pd.notna(row[0]) else ''
             val = row[1] if len(row) > 1 else None
 
+            # Check where product section starts
             if key.lower() == "hscode":
                 product_start_index = i
                 break
 
+            # Store key-value pairs from the header section
             if key and not any(key.startswith(s) for s in ["1)", "2)", "3)", "4)"]):
                 section_data[key] = val
 
-        # Add STRNs to `data` for invoice rendering
+        # --- Assign extracted fields to `data` dictionary ---
         data["sellerSTRN"] = section_data.get("sellerSTRN", "")
         data["buyerSTRN"] = section_data.get("buyerSTRN", "")
+        data["CNIC"] = section_data.get("CNIC", "")          # Add CNIC
+        data["PO"] = section_data.get("PO#", "")             # Add PO#
 
-        # --- Extract simple rate per item for HTML invoice ---
+        # --- Read products table from product_start_index ---
         product_df = pd.read_excel(filepath, skiprows=product_start_index)
+
+        # Extract unit rate for each product item
         for i, item in enumerate(items):
             try:
-                item["unitrate"] = float(product_df.iloc[i].get("rate", 0))  # simple unit rate
+                item["unitrate"] = float(product_df.iloc[i].get("rate", 0))  # Extract unit rate
             except:
                 item["unitrate"] = 0
 
