@@ -445,7 +445,7 @@ def generate_invoice_excel():
 # Read from Excel file again to get display-only values
     filepath = last_uploaded_file.get(env)
     if filepath and os.path.exists(filepath):
-        df = pd.read_excel(filepath, header=None, keep_default_na=False)
+        df = pd.read_excel(filepath, header=None,keep_default_na=False)
 
         # --- Extract section data (header fields above the product list) ---
         section_data = {}
