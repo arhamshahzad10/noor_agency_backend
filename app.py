@@ -242,8 +242,60 @@ def get_records():
     return jsonify(records)
 
 
-
-
+# New endpoint to delete an invoice
+@app.route('/delete-invoice', methods=['POST'])
+def delete_invoice():
+    # Only allow deletions in sandbox environment
+    env = get_env()
+    if env != 'sandbox':
+        return jsonify({'success': False, 'error': 'Deletion only allowed in sandbox environment'}), 403
+    
+    # Get client ID from session
+    client_id = session.get('client_id')
+    if not client_id:
+        return jsonify({'success': False, 'error': 'No client ID in session'}), 401
+    
+    # Get invoice reference from request
+    data = request.get_json()
+    invoice_ref = data.get('invoiceReference')
+    if not invoice_ref:
+        return jsonify({'success': False, 'error': 'No invoice reference provided'}), 400
+    
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Find invoices matching the reference, client ID, and environment
+        cur.execute("""
+            SELECT id FROM invoices 
+            WHERE client_id = %s AND env = %s AND 
+            (
+                (invoice_data::jsonb->>'fbrInvoiceNumber' = %s) OR
+                (fbr_response::jsonb->>'invoiceNumber' = %s)
+            )
+        """, (client_id, env, invoice_ref, invoice_ref))
+        
+        row = cur.fetchone()
+        
+        if not row:
+            cur.close()
+            conn.close()
+            return jsonify({'success': False, 'error': 'Invoice not found'}), 404
+        
+        invoice_id = row[0]
+        
+        # Delete the invoice
+        cur.execute("DELETE FROM invoices WHERE id = %s", (invoice_id,))
+        conn.commit()
+        
+        cur.close()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Invoice deleted successfully'})
+        
+    except Exception as e:
+        print(f"Error deleting invoice: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 #  Upload Excel File
