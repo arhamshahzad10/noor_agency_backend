@@ -334,7 +334,7 @@ def get_json():
         key = str(row[0]).strip() if pd.notna(row[0]) else ''
         val = row[1] if len(row) > 1 else None
 
-        if key.lower() == "hscode":
+        if key.lower() == "productdescription":
             product_start_index = i
             break
 
@@ -366,11 +366,11 @@ def get_json():
                 ("productDescription", safe(row.get("productDescription"))),
                 ("rate", rate),
                 ("uoM", safe(row.get("uoM"))),
-                ("quantity", float(safe(row.get("quantity"), 0))),
-                ("totalValues", float(safe(row.get("totalValues"), 0))),
-                ("valueSalesExcludingST", float(safe(row.get("valueSalesExcludingST"), 0))),
+                ("quantity", round(float(safe(row.get("quantity"), 0)), 2)),
+                ("totalValues", round(float(safe(row.get("totalValues"), 0)), 2)),
+                ("valueSalesExcludingST", round(float(safe(row.get("valueSalesExcludingST"), 0)), 2)),
                 ("fixedNotifiedValueOrRetailPrice", float(safe(row.get("fixedNotifiedValueOrRetailPrice"), 0))),
-                ("salesTaxApplicable", float(safe(row.get("salesTaxApplicable"), 0))),
+                ("salesTaxApplicable", round(float(safe(row.get("salesTaxApplicable"), 0)), 2)),
                 ("salesTaxWithheldAtSource", float(safe(row.get("salesTaxWithheldAtSource"), 0))),
                 ("extraTax", str(safe(row.get("extraTax")))),
                 ("furtherTax", float(safe(row.get("furtherTax"), 0))),
@@ -522,7 +522,7 @@ def generate_invoice_excel():
             val = row[1] if len(row) > 1 else None
 
             # Check where product section starts
-            if key.lower() == "hscode":
+            if key.lower() == "productdescription":
                 product_start_index = i
                 break
 

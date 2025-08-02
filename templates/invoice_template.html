@@ -152,7 +152,7 @@
 
         {# Add empty rows to make total rows = 7 #}
         {% set total_rows = data["items"]|length %}
-        {% for i in range(total_rows + 1, 8) %}
+        {% for i in range(total_rows + 1, 6) %}
         <tr>
             <td>{{ i }}</td>
             <td></td>
@@ -172,10 +172,10 @@
 
 
 <!-- Summary Section -->
-<table class="no-border" style="width: 101%; margin-top: -3px; border-top: none;">
+<table class="no-border" style="width: 101.7%; margin-top: -3px; border-top: none;">
     <tr>
         <!-- Left: Centered Amount in Words -->
-        <td style="width: 60%; border: none;">
+        <td style="width: 60%; border: none; vertical-align: top;">
             <table style="width: 100%;">
                 <tr>
                     <td colspan="2" style="text-align: left;">
@@ -187,20 +187,20 @@
         </td>
 
         <!-- Right: Aligned Summary Table -->
-        <td style="width: 40%; border: none; vertical-align: top;">
-            <div style="float: right;">
-                <table style="width: 100%;">
+        <td style="width: 36%; border: none; vertical-align: top;">
+            <div style="margin-left: auto; width: 100%;">
+                <table style="width: 97.8%;">
                     <tr>
-                        <td style="text-align: left; font-weight: bold; border: 1px solid #333;">Value Exclusive of ST</td>
-                        <td style="text-align: right; border: 1px solid #333;">{{ data.totalExcl | comma_format}}</td>
+                        <td style="width: 57.4%; text-align: left; font-weight: bold; border: 1px solid #333; ">Value Exclusive <br>of Sales Tax</td>
+                        <td style="width: 42.6%; text-align: right; font-weight: bold; border: 1px solid #333;">{{ data.totalExcl | comma_format}}</td>
                     </tr>
                     <tr>
-                        <td style="text-align: left; font-weight: bold; border: 1px solid #333;">Value of Sales Tax</td>
-                        <td style="text-align: right; border: 1px solid #333;">{{ data.totalTax | comma_format }}</td>
+                        <td style="text-align: left; font-weight: bold; border: 1px solid #333; height: 30px; ">Value of Sales Tax</td>
+                        <td style="text-align: right; font-weight: bold; border: 1px solid #333; height: 30px;">{{ data.totalTax | comma_format }}</td>
                     </tr>
                     <tr>
-                        <td style="text-align: left; font-weight: bold; border: 1px solid #333;">Value Inclusive of ST</td>
-                        <td style="text-align: right; border: 1px solid #333;">{{ data.totalInclusive | comma_format }}</td>
+                        <td style="text-align: left; font-weight: bold; border: 1px solid #333; ">Value Inclusive <br> of Sales Tax</td>
+                        <td style="text-align: right; font-weight: bold; border: 1px solid #333;">{{ data.totalInclusive | comma_format }}</td>
                     </tr>
                 </table>
             </div>
