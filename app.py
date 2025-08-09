@@ -17,6 +17,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 load_dotenv()
 import datetime
+import psutil
 
 
 app = Flask(__name__)
@@ -422,14 +423,27 @@ def get_json():
 
 @app.route('/submit-fbr', methods=['POST'])
 def submit_fbr():
+    import os, psutil
+
+    def log_memory_usage(label=""):
+        process = psutil.Process(os.getpid())
+        mem_mb = process.memory_info().rss / 1024 / 1024  # in MB
+        print(f"[MEMORY] {label}: {mem_mb:.2f} MB used")
+
+    log_memory_usage("Start submit_fbr")
+
     env = get_env()
     if env not in last_json_data:
         return jsonify({'error': 'No JSON to submit'}), 400
+
+    log_memory_usage("After env check")
 
     client_id = session.get("client_id")
     config = get_client_config(client_id, env)
     api_url = config["api_url"]
     api_token = config["api_token"]
+
+    log_memory_usage("After config fetch")
 
     headers = {
         "Authorization": f"Bearer {api_token}",
@@ -438,13 +452,17 @@ def submit_fbr():
 
     try:
         # Send request to FBR
+        log_memory_usage("Before FBR API call")
         response = requests.post(api_url, headers=headers, json=last_json_data[env])
+        log_memory_usage("After FBR API call")
         
         # Parse response
         try:
             res_json = response.json()
+            log_memory_usage("After JSON parse")
         except Exception:
             res_json = {}
+            log_memory_usage("After JSON parse (failed)")
 
         invoice_no = res_json.get("invoiceNumber", "N/A")
         last_json_data[env]["fbrInvoiceNumber"] = invoice_no
@@ -452,6 +470,7 @@ def submit_fbr():
 
         # If failed, return error without inserting into DB
         if not is_success:
+            log_memory_usage("Error response")
             return jsonify({
                 "status": "Failed",
                 "status_code": response.status_code,
@@ -466,10 +485,13 @@ def submit_fbr():
         value_sales_ex_st = sum(float(item.get("valueSalesExcludingST", 0) or 0) for item in items)
         sales_tax_applicable = sum(float(item.get("salesTaxApplicable", 0) or 0) for item in items)
         total_value = value_sales_ex_st + sales_tax_applicable
+        
+        log_memory_usage("After calculations")
 
         # Insert into invoices table in Supabase
         conn = get_db_connection()
         cur = conn.cursor()
+        log_memory_usage("Before DB insert")
         cur.execute("""
             INSERT INTO invoices (client_id, env, invoice_data, fbr_response, status, created_at)
             VALUES (%s, %s, %s, %s, %s, NOW())
@@ -483,8 +505,10 @@ def submit_fbr():
         conn.commit()
         cur.close()
         conn.close()
+        log_memory_usage("After DB insert")
 
         # Return response
+        log_memory_usage("End submit_fbr (success)")
         return jsonify({
             "status": status,
             "invoiceNumber": invoice_no,
@@ -492,6 +516,7 @@ def submit_fbr():
         })
 
     except Exception as e:
+        log_memory_usage("End submit_fbr (exception)")
         return jsonify({"error": str(e)}), 500
 
 
