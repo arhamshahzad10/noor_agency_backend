@@ -38,6 +38,16 @@ app.config.update(
     SESSION_COOKIE_PATH='/'
 )
 
+@app.route("/test-fbr-connect")
+def test_fbr_connect():
+    import requests, time
+    start = time.time()
+    try:
+        r = requests.get("https://gw.fbr.gov.pk", timeout=5)
+        return f"Status: {r.status_code}, Time: {time.time()-start:.2f}s"
+    except Exception as e:
+        return f"Error: {str(e)}, Time: {time.time()-start:.2f}s"
+
 @app.template_filter('datetimeformat')
 def datetimeformat(value):
     try:
